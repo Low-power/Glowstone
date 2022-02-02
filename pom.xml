@@ -29,7 +29,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bukkit.version>1.11.2-R0.1-SNAPSHOT</bukkit.version>
         <protocol.version>1.11.2</protocol.version>
-        <jar-class-path>libraries/jline/jline/2.12.1/jline-2.12.1.jar libraries/io/netty/netty-all/4.1.17.Final/netty-all-4.1.17.Final.jar</jar-class-path>
+        <netty.version>4.1.17.Final</netty.version>
+        <jline.version>2.12.1</jline.version>
+        <jar-class-path>libraries/io/netty/netty-all/${netty.version}/netty-all-${netty.version}.jar libraries/jline/jline/${jline.version}/jline-${jline.version}.jar</jar-class-path>
     </properties>
 
     <repositories>
@@ -72,13 +74,13 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.17.Final</version>
+            <version>${netty.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jline</groupId>
             <artifactId>jline</artifactId>
-            <version>2.12.1</version>
+            <version>${jline.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
