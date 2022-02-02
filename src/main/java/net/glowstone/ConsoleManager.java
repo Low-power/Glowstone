@@ -20,6 +20,7 @@ import org.fusesource.jansi.AnsiConsole;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.Callable;
 import java.util.*;
 import java.util.logging.*;
 import java.util.logging.Formatter;
@@ -229,9 +230,15 @@ public final class ConsoleManager {
 
     private class CommandCompleter implements Completer {
         @Override
-        public int complete(String buffer, int cursor, List<CharSequence> candidates) {
+        public int complete(final String buffer, int cursor, List<CharSequence> candidates) {
             try {
-                List<String> completions = server.getScheduler().syncIfNeeded(() -> server.getCommandMap().tabComplete(sender, buffer));
+                List<String> completions = server.getScheduler().syncIfNeeded(
+					new Callable<List<String>>() {
+						public List<String> call() {
+							return server.getCommandMap().tabComplete(sender, buffer);
+						}
+					}
+				);
                 if (completions == null) {
                     return cursor;  // no completions
                 }

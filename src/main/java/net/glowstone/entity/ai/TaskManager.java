@@ -58,12 +58,12 @@ public class TaskManager {
     }
 
     public void cancelTasks() {
-        tasks.forEach(task -> task.reset(entity));
+		for(EntityTask task : tasks) task.reset(entity);
         tasks.clear();
     }
 
     public void pulse() {
-        tasks.forEach(task -> task.pulse(entity));
+		for(EntityTask task : tasks) task.pulse(entity);
     }
 
     public void addTask(EntityTask task) {

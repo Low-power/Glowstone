@@ -41,7 +41,6 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 /**
  * A GlowLivingEntity is a {@link Player} or {@link Monster}.
@@ -361,8 +360,9 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
     @Override
     public List<Message> createUpdateMessage() {
         List<Message> messages = super.createUpdateMessage();
-
-        messages.addAll(equipmentMonitor.getChanges().stream().map(change -> new EntityEquipmentMessage(id, change.slot, change.item)).collect(Collectors.toList()));
+		for(EquipmentMonitor.Entry change : equipmentMonitor.getChanges()) {
+			messages.add(new EntityEquipmentMessage(id, change.slot, change.item));
+		}
         if (headRotated) {
             messages.add(new EntityHeadRotationMessage(id, Position.getIntHeadYaw(headYaw)));
             headRotated = false;
@@ -578,7 +578,8 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
     }
 
     private List<Block> getLineOfSight(HashSet<Byte> transparent, int maxDistance, int maxLength) {
-        Set<Material> materials = transparent.stream().map(Material::getMaterial).collect(Collectors.toSet());
+        Set<Material> materials = new HashSet<>(transparent.size());
+		for(Byte id : transparent) materials.add(Material.getMaterial(id));
         return getLineOfSight(materials, maxDistance, maxLength);
     }
 
@@ -683,7 +684,10 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
                 }
                 List<ItemStack> items = new ArrayList<>();
                 if (!world.getGameRuleMap().getBoolean("keepInventory")) {
-                    items = Arrays.stream(player.getInventory().getContents()).filter(stack -> !InventoryUtil.isEmpty(stack)).collect(Collectors.toList());
+					for(ItemStack stack : player.getInventory().getContents()) {
+						if(InventoryUtil.isEmpty(stack)) continue;
+						items.add(stack);
+					}
                     player.getInventory().clear();
                 }
                 PlayerDeathEvent event = new PlayerDeathEvent(player, items, 0, player.getDisplayName() + " died.");
@@ -694,7 +698,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
                 }
                 player.incrementStatistic(Statistic.DEATHS);
             } else {
-                EntityDeathEvent deathEvent = new EntityDeathEvent(this, new ArrayList<>());
+                EntityDeathEvent deathEvent = new EntityDeathEvent(this, new ArrayList<ItemStack>());
                 if (world.getGameRuleMap().getBoolean("doMobLoot")) {
                     LootData data = LootingManager.generate(this);
                     Collections.addAll(deathEvent.getDrops(), data.getItems());

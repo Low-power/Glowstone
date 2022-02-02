@@ -13,6 +13,8 @@ import net.glowstone.net.message.play.game.BlockChangeMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Chunk;
+import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -231,7 +233,11 @@ public final class GlowBlock implements Block {
         ((GlowChunk) world.getChunkAt(this)).setMetaData(x & 0xf, z & 0xf, y, data);
 
         if (oldTypeId == Material.DOUBLE_PLANT && getRelative(BlockFace.UP).getType() == Material.DOUBLE_PLANT) {
-            world.getChunkAtAsync(this, chunk -> ((GlowChunk) chunk).setType(x & 0xf, z & 0xf, y + 1, 0));
+            world.getChunkAtAsync(this, new World.ChunkLoadCallback() {
+					public void onLoad(Chunk chunk) {
+						((GlowChunk)chunk).setType(x & 0xf, z & 0xf, y + 1, 0);
+					}
+				});
             BlockChangeMessage bcmsg = new BlockChangeMessage(x, y + 1, z, 0, 0);
             for (GlowPlayer p : getWorld().getRawPlayers()) {
                 p.sendBlockChange(bcmsg);
@@ -460,7 +466,10 @@ public final class GlowBlock implements Block {
         }
 
         Location location = getLocation();
-        drops.stream().filter(stack -> r.nextFloat() < yield).forEach(stack -> getWorld().dropItemNaturally(location, stack));
+		for(ItemStack stack : drops) {
+			if(r.nextFloat() >= yield) continue;
+			getWorld().dropItemNaturally(location, stack);
+		}
 
         setType(Material.AIR);
         return true;
@@ -592,7 +601,11 @@ public final class GlowBlock implements Block {
 
         long time = getWorld().getFullTime();
 
-        gameTicks.removeIf(rate -> rate < time);
+		Iterator<Long> iterator = gameTicks.iterator();
+		while(iterator.hasNext()) {
+			Long rate = iterator.next();
+			if(rate.longValue() < time) iterator.remove();
+		}
 
         counterMap.put(target, gameTicks);
         return gameTicks.size();

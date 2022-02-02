@@ -9,7 +9,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Ban list implementation.
@@ -139,7 +138,7 @@ public class GlowBanList extends JsonListFile implements BanList {
     public Set<BanEntry> getBanEntries() {
         expungeBans();
         Set<BanEntry> result = new HashSet<>(entryMap.size());
-        result.addAll(entryMap.values().stream().map(GlowBanEntry::clone).collect(Collectors.toList()));
+		for(GlowBanEntry entry : entryMap.values()) result.add(entry.clone());
         return result;
     }
 

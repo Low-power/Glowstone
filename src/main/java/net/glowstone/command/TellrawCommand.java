@@ -9,13 +9,14 @@ import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-
+import java.util.List;
 import java.util.Collections;
 
 public class TellrawCommand extends BukkitCommand {
 
+	@SuppressWarnings("unchecked")
     public TellrawCommand() {
-        super("tellraw", "Send a private JSON message to the given player", "/tellraw <player> <raw-json-message>", Collections.emptyList());
+        super("tellraw", "Send a private JSON message to the given player", "/tellraw <player> <raw-json-message>", (List)Collections.emptyList());
         setPermission("glowstone.command.tellraw");
     }
 

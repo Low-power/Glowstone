@@ -11,52 +11,52 @@ import java.util.*;
 @Data
 public class LootRandomValues {
 
-    private final Optional<Integer> min, max;
-    private final Optional<String> reflectiveCount;
+    private final Integer min, max;
+    private final String reflectiveCount;
     private final Map<Integer, Double> probabilities = new HashMap<>();
 
     public LootRandomValues(int min, int max) {
-        this.min = Optional.of(min);
-        this.max = Optional.of(max);
-        this.reflectiveCount = Optional.empty();
+        this.min = Integer.valueOf(min);
+        this.max = Integer.valueOf(max);
+        this.reflectiveCount = null;
     }
 
     public LootRandomValues(JSONObject object) {
         if (!object.containsKey("count")) {
-            this.min = Optional.empty();
-            this.max = Optional.empty();
-            this.reflectiveCount = Optional.empty();
+            this.min = null;
+            this.max = null;
+            this.reflectiveCount = null;
             return;
         }
         Object count = object.get("count");
         if (count instanceof Long) {
-            this.min = Optional.of(((Long) count).intValue());
+            this.min = Integer.valueOf(((Long)count).intValue());
             this.max = min;
-            this.reflectiveCount = Optional.empty();
+            this.reflectiveCount = null;
             return;
         }
         if (count instanceof String) {
-            this.min = Optional.empty();
-            this.max = Optional.empty();
-            this.reflectiveCount = Optional.of((String) count);
+            this.min = null;
+            this.max = null;
+            this.reflectiveCount = (String)count;
             return;
         }
         if (count instanceof JSONArray) {
-            this.min = Optional.empty();
-            this.max = Optional.empty();
-            this.reflectiveCount = Optional.empty();
+            this.min = null;
+            this.max = null;
+            this.reflectiveCount = null;
             
             // todo: probabilities
             return;
         }
-        this.reflectiveCount = Optional.empty();
+        this.reflectiveCount = null;
         object = (JSONObject) count;
         if (object.containsKey("min")) {
-            this.min = Optional.of(((Long) object.get("min")).intValue());
+            this.min = Integer.valueOf(((Long)object.get("min")).intValue());
         } else {
-            this.min = Optional.of(0);
+            this.min = 0;
         }
-        this.max = Optional.of(((Long) object.get("max")).intValue());
+        this.max = Integer.valueOf(((Long)object.get("max")).intValue());
     }
 
     /**
@@ -66,25 +66,25 @@ public class LootRandomValues {
      * @return the random value
      */
     public int generate(Random random, LivingEntity entity) {
-        if (!probabilities.isEmpty()) {
+        if(probabilities == null) {
             double rand = random.nextDouble();
             double cur = 0;
             for (Map.Entry<Integer, Double> entry : probabilities.entrySet()) {
-                cur += entry.getValue();
+                cur += entry.getValue().doubleValue();
                 if (rand < cur) {
-                    return entry.getKey();
+                    return entry.getKey().intValue();
                 }
             }
             return 0;
         }
-        if (reflectiveCount.isPresent()) {
-            return ((Number) new ReflectionProcessor(reflectiveCount.get(), entity).process()).intValue();
+        if (reflectiveCount != null) {
+            return ((Number) new ReflectionProcessor(reflectiveCount, entity).process()).intValue();
         }
-        if (min.isPresent() && max.isPresent()) {
-            if (Objects.equals(min.get(), max.get())) {
-                return min.get();
+        if (max != null && min != null) {
+            if (Objects.equals(min, max)) {
+                return min.intValue();
             }
-            return random.nextInt(max.get() + 1 - min.get()) + min.get();
+            return random.nextInt(max.intValue() + 1 - min.intValue()) + min.intValue();
         }
         return 0;
     }

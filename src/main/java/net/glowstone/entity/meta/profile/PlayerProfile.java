@@ -32,8 +32,11 @@ public class PlayerProfile {
      * @param name The player's name.
      * @param uuid The player's UUID.
      */
+	@SuppressWarnings("unchecked")
     public PlayerProfile(String name, UUID uuid) {
-        this(name, uuid, Collections.emptyList());
+		// javac(1) says 'inconvertible types', converting to raw type instead
+		//this(name, uuid, (List<PlayerProperty>)Collections.emptyList());
+		this(name, uuid, (List)Collections.emptyList());
     }
 
     /**

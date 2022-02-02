@@ -23,16 +23,16 @@ public class BlockButton extends BlockAttachable {
     }
 
     @Override
-    public boolean blockInteract(GlowPlayer player, GlowBlock block, BlockFace face, Vector clickedLoc) {
-        GlowBlockState state = block.getState();
-        MaterialData data = state.getData();
+    public boolean blockInteract(GlowPlayer player, final GlowBlock block, BlockFace face, Vector clickedLoc) {
+        final GlowBlockState state = block.getState();
+        final MaterialData data = state.getData();
 
         if (!(data instanceof Button)) {
             warnMaterialData(Button.class, data);
             return false;
         }
 
-        Button button = (Button) data;
+        final Button button = (Button) data;
 
         if (button.isPowered()) {
             return true;

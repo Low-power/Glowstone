@@ -6,7 +6,7 @@ import net.glowstone.util.nbt.CompoundTag;
 import net.glowstone.util.nbt.TagType;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
-
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -61,12 +61,13 @@ public abstract class EntityStore<T extends GlowEntity> {
      * @param entity The target entity.
      * @param tag    The entity's tag.
      */
+	@SuppressWarnings("unchecked")
     public void load(T entity, CompoundTag tag) {
         // id, world, and location are handled by EntityStore
         // base stuff for all entities is here:
 
         if (tag.isList("Motion", TagType.DOUBLE)) {
-            entity.setVelocity(NbtSerialization.listToVector(tag.getList("Motion", TagType.DOUBLE)));
+            entity.setVelocity(NbtSerialization.listToVector((List)tag.getList("Motion", TagType.DOUBLE)));
         }
         if (tag.isFloat("FallDistance")) {
             entity.setFallDistance(tag.getFloat("FallDistance"));

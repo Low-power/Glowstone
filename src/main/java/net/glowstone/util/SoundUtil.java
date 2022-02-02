@@ -4,7 +4,7 @@ import net.glowstone.GlowWorld;
 import net.glowstone.entity.GlowPlayer;
 import org.bukkit.Location;
 import org.bukkit.Sound;
-
+import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -14,7 +14,12 @@ public class SoundUtil {
         if (location == null || sound == null) return;
         GlowWorld world = (GlowWorld) location.getWorld();
         double radiusSquared = volume * volume * 256;
-        world.getRawPlayers().parallelStream().filter(player -> player.getLocation().distanceSquared(location) <= radiusSquared).filter(player -> !Arrays.asList(exclude).contains(player)).forEach(player -> player.playSound(location, sound, volume, pitch));
+		List<GlowPlayer> exclude_list = Arrays.asList(exclude);
+		for(GlowPlayer player : world.getRawPlayers()) {
+			if(player.getLocation().distanceSquared(location) > radiusSquared) continue;
+			if(exclude_list.contains(player)) continue;
+			player.playSound(location, sound, volume, pitch);
+		}
     }
 
     public static void playSoundPitchRange(Location location, Sound sound, float volume, float pitchBase, float pitchRange, boolean allowNegative, GlowPlayer... exclude) {

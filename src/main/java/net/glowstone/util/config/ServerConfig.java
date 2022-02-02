@@ -92,7 +92,7 @@ public final class ServerConfig {
      * @see ServerConfig#save()
      */
     public void set(Key key, Object value) {
-        parameters.replace(key, value);
+		if(parameters.containsKey(key)) parameters.put(key, value);
         config.set(key.path, value);
     }
 
@@ -393,7 +393,6 @@ public final class ServerConfig {
         METRICS_UUID("advanced.metrics-server-uuid", UUID.randomUUID().toString()),
         GPGPU("advanced.gpgpu", false),
         GPGPU_ANY_DEVICE("advanced.gpgpu-use-any-device", false),
-        RUN_CLIENT("advanced.run-glowclient", false),
 
         // query rcon etc
         QUERY_ENABLED("extras.query-enabled", false, Migrate.PROPS, "enable-query"),

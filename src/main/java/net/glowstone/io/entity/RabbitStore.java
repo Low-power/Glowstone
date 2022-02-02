@@ -45,7 +45,8 @@ class RabbitStore extends AgeableStore<GlowRabbit> {
         if (compound.isInt("RabbitType")) {
             Type rabbitType;
             int rabbitId = compound.getInt("RabbitType");
-            rabbitType = rabbitTypeMap.getOrDefault(rabbitId, Type.BROWN);
+            rabbitType = rabbitTypeMap.get(rabbitId);
+			if(rabbitType == null) rabbitType = Type.BROWN;
             entity.setRabbitType(rabbitType);
         }
         // TODO "MoreCarrotTicks" -> int

@@ -23,7 +23,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * A class which manages the {@link GlowChunk}s currently loaded in memory.
@@ -389,7 +388,11 @@ public final class ChunkManager {
      * @return The currently loaded chunks.
      */
     public GlowChunk[] getLoadedChunks() {
-        ArrayList<GlowChunk> result = chunks.values().stream().filter(GlowChunk::isLoaded).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<GlowChunk> result = new ArrayList<>();
+		for(GlowChunk chunk : chunks.values()) {
+			if(!chunk.isLoaded()) continue;
+			result.add(chunk);
+		}
         return result.toArray(new GlowChunk[result.size()]);
     }
 

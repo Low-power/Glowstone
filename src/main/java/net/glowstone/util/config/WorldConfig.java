@@ -75,7 +75,7 @@ public final class WorldConfig {
      * @see #save()
      */
     public void set(Key key, Object value) {
-        cache.replace(key, value);
+		if(cache.containsKey(key)) cache.put(key, value);
         config.set(key.path, value);
     }
 

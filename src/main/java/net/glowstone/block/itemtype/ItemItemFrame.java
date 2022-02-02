@@ -17,6 +17,9 @@ public class ItemItemFrame extends ItemType {
     public void rightClickBlock(GlowPlayer player, GlowBlock target, BlockFace face, ItemStack holding, Vector clickedLoc) {
         GlowItemFrame entity = new GlowItemFrame(player, target.getLocation().getBlock().getRelative(face).getLocation(), face);
         List<Message> spawnMessage = entity.createSpawnMessage();
-        entity.getWorld().getRawPlayers().stream().filter(p -> p.canSeeEntity(entity)).forEach(p -> p.getSession().sendAll(spawnMessage.toArray(new Message[spawnMessage.size()])));
+		for(GlowPlayer p : entity.getWorld().getRawPlayers()) {
+			if(!p.canSeeEntity(entity)) continue;
+			p.getSession().sendAll(spawnMessage.toArray(new Message[spawnMessage.size()]));
+		}
     }
 }

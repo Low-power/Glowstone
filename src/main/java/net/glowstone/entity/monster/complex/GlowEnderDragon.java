@@ -45,6 +45,6 @@ public class GlowEnderDragon extends GlowMonster implements EnderDragon {
 
     @Override
     public Set<ComplexEntityPart> getParts() {
-        return new HashSet<>(parts.values());
+        return new HashSet<ComplexEntityPart>(parts.values());
     }
 }

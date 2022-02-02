@@ -69,7 +69,11 @@ public class Metrics {
             public void run() {
                 // Nevertheless we want our code to run in the Bukkit main thread, so we have to use the Bukkit scheduler
                 // Don't be afraid! The connection to the bStats server is still async, only the stats collection is sync ;)
-                Bukkit.getScheduler().runTask(null, () -> submitData());
+                Bukkit.getScheduler().runTask(null, new Runnable() {
+							public void run() {
+								submitData();
+							}
+						});
             }
         }, 1000 * 60 * 5, 1000 * 60 * 30);
         // Submit the data every 30 minutes, first time after 5 minutes to give other plugins enough time to start
@@ -151,17 +155,19 @@ public class Metrics {
         data.put("plugins", pluginData);
 
         // Create a new thread for the connection to the bStats server
-        new Thread(() -> {
-            try {
-                // Send the data
-                sendData(data);
-            } catch (Exception e) {
-                // Something went wrong! :(
-                if (logFailedRequests) {
-                    server.getLogger().log(Level.WARNING, "Could not submit plugin stats of " + server.getName(), e);
-                }
-            }
-        }).start();
+        new Thread(new Runnable() {
+				public void run() {
+					try {
+						// Send the data
+						sendData(data);
+					} catch (Exception e) {
+						// Something went wrong! :(
+						if (logFailedRequests) {
+							server.getLogger().log(Level.WARNING, "Could not submit plugin stats of " + server.getName(), e);
+						}
+					}
+				}
+			}).start();
     }
 
     /**
@@ -323,7 +329,7 @@ public class Metrics {
         protected JSONObject getChartData() {
             JSONObject data = new JSONObject();
             JSONObject values = new JSONObject();
-            HashMap<String, Integer> map = getValues(new HashMap<>());
+            HashMap<String, Integer> map = getValues(new HashMap<String, Integer>());
             if (map == null || map.isEmpty()) {
                 // Null = skip the chart
                 return null;
@@ -407,7 +413,7 @@ public class Metrics {
         protected JSONObject getChartData() {
             JSONObject data = new JSONObject();
             JSONObject values = new JSONObject();
-            HashMap<String, Integer> map = getValues(new HashMap<>());
+            HashMap<String, Integer> map = getValues(new HashMap<String, Integer>());
             if (map == null || map.isEmpty()) {
                 // Null = skip the chart
                 return null;
@@ -457,7 +463,7 @@ public class Metrics {
         protected JSONObject getChartData() {
             JSONObject data = new JSONObject();
             JSONObject values = new JSONObject();
-            HashMap<String, Integer> map = getValues(new HashMap<>());
+            HashMap<String, Integer> map = getValues(new HashMap<String, Integer>());
             if (map == null || map.isEmpty()) {
                 // Null = skip the chart
                 return null;
@@ -500,7 +506,7 @@ public class Metrics {
         protected JSONObject getChartData() {
             JSONObject data = new JSONObject();
             JSONObject values = new JSONObject();
-            HashMap<String, int[]> map = getValues(new HashMap<>());
+            HashMap<String, int[]> map = getValues(new HashMap<String, int[]>());
             if (map == null || map.isEmpty()) {
                 // Null = skip the chart
                 return null;
@@ -590,7 +596,7 @@ public class Metrics {
         protected JSONObject getChartData() {
             JSONObject data = new JSONObject();
             JSONObject values = new JSONObject();
-            HashMap<Country, Integer> map = getValues(new HashMap<>());
+            HashMap<Country, Integer> map = getValues(new HashMap<Country, Integer>());
             if (map == null || map.isEmpty()) {
                 // Null = skip the chart
                 return null;

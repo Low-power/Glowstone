@@ -289,8 +289,9 @@ public final class GlowHelpMap implements HelpMap {
     private class LazyIndexTopic extends IndexHelpTopic {
         private Collection<String> topics;
 
+		@SuppressWarnings("unchecked")
         public LazyIndexTopic(String name, String shortText, String permission, Collection<String> topics, String preamble) {
-            super(name, shortText, permission, Collections.emptyList(), preamble);
+            super(name, shortText, permission, (Collection)Collections.emptyList(), preamble);
             this.topics = topics;
         }
 

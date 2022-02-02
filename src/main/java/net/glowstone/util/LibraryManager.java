@@ -158,7 +158,12 @@ public final class LibraryManager {
         @Override
         protected String findLibrary(String libname) {
             String nativeName = System.mapLibraryName(libname);
-            return libPaths.stream().map(path -> path.resolve(nativeName)).filter(Files::exists).map(Path::toString).findFirst().orElse(super.findLibrary(libname));
+			for(Path path : libPaths) {
+				path = path.resolve(nativeName);
+				if(!Files.exists(path)) continue;
+				return path.toString();
+			}
+			return super.findLibrary(libname);
         }
     }
 }

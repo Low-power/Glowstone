@@ -8,7 +8,6 @@ import org.bukkit.entity.Entity;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * A class which manages all of the entities within a world.
@@ -112,6 +111,12 @@ public class EntityManager implements Iterable<GlowEntity> {
 
     public List<Entity> getEntitiesInside(BoundingBox searchBox, GlowEntity except) {
         // todo: narrow search based on the box's corners
-        return entities.values().stream().filter(entity -> entity != except && entity.intersects(searchBox)).collect(Collectors.toCollection(LinkedList::new));
+		LinkedList<Entity> list = new LinkedList<>();
+		for(GlowEntity entity : entities.values()) {
+			if(entity == except) continue;
+			if(!entity.intersects(searchBox)) continue;
+			list.add(entity);
+		}
+		return list;
     }
 }

@@ -16,10 +16,10 @@ public class EntityDirector {
 
     public static void registerEntityMobState(EntityType entity, MobState state, String task) {
         if (!mobStates.containsKey(entity)) {
-            mobStates.put(entity, new HashMap<>());
+            mobStates.put(entity, new HashMap<MobState, List<String>>());
         }
         if (!mobStates.get(entity).containsKey(state)) {
-            mobStates.get(entity).put(state, new ArrayList<>());
+            mobStates.get(entity).put(state, new ArrayList<String>());
         }
         mobStates.get(entity).get(state).add(task);
     }

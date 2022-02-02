@@ -1,5 +1,6 @@
 package net.glowstone.scheduler;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import net.glowstone.GlowServer;
@@ -73,18 +74,24 @@ public final class GlowScheduler implements BukkitScheduler {
         this.server = server;
         this.worlds = worlds;
         inTickTaskCondition = worlds.getAdvanceCondition();
-        tickEndRun = this.worlds::doTickEnd;
+        tickEndRun = new Runnable() {
+			public void run() {
+				GlowScheduler.this.worlds.doTickEnd();
+			}
+		};
         primaryThread = Thread.currentThread();
     }
 
     public void start() {
-        executor.scheduleAtFixedRate(() -> {
-            try {
-                pulse();
-            } catch (Exception ex) {
-                GlowServer.logger.log(Level.SEVERE, "Error while pulsing", ex);
-            }
-        }, 0, PULSE_EVERY, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(new Runnable() {
+				public void run() {
+					try {
+						pulse();
+					} catch (Exception ex) {
+						GlowServer.logger.log(Level.SEVERE, "Error while pulsing", ex);
+					}
+				}
+			}, 0, PULSE_EVERY, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -97,7 +104,10 @@ public final class GlowScheduler implements BukkitScheduler {
         asyncTaskExecutor.shutdown();
 
         synchronized (inTickTaskCondition) {
-            inTickTasks.stream().filter(task -> task instanceof Future).forEach(task -> ((Future) task).cancel(false));
+			for(Runnable task : inTickTasks) {
+				if(!(task instanceof Future)) continue;
+				((Future)task).cancel(false);
+			}
             inTickTasks.clear();
         }
     }
@@ -324,7 +334,11 @@ public final class GlowScheduler implements BukkitScheduler {
 
     @Override
     public void cancelTasks(Plugin plugin) {
-        tasks.values().removeIf(glowTask -> glowTask.getOwner() == plugin);
+		Iterator<GlowTask> iterator = tasks.values().iterator();
+		while(iterator.hasNext()) {
+			GlowTask task = iterator.next();
+			if(task.getOwner() == plugin) iterator.remove();
+		}
     }
 
     @Override
@@ -349,8 +363,14 @@ public final class GlowScheduler implements BukkitScheduler {
      * @return active async tasks
      */
     @Override
+	@SuppressWarnings("unchecked")
     public List<BukkitWorker> getActiveWorkers() {
-        return ImmutableList.copyOf(Collections2.filter(tasks.values(), glowTask -> glowTask != null && !glowTask.isSync() && glowTask.getLastExecutionState() == TaskExecutionState.RUN));
+		// javac(1) says 'inconvertible types', converting to raw type instead
+        return (List)ImmutableList.copyOf(Collections2.filter(tasks.values(), new Predicate<GlowTask>() {
+				public boolean apply(GlowTask task) {
+					return task != null && !task.isSync() && task.getLastExecutionState() == TaskExecutionState.RUN;
+				}
+			}));
     }
 
     /**
@@ -359,8 +379,9 @@ public final class GlowScheduler implements BukkitScheduler {
      * @return the tasks to be run
      */
     @Override
+	@SuppressWarnings("unchecked")
     public List<BukkitTask> getPendingTasks() {
-        return new ArrayList<>(tasks.values());
+        return new ArrayList<>((List)tasks.values());
     }
 
     private static class GlowThreadFactory implements ThreadFactory {

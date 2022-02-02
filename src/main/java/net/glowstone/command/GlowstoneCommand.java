@@ -56,7 +56,11 @@ public class GlowstoneCommand extends BukkitCommand {
         if (args[0].equalsIgnoreCase("property")) {
             if (args.length == 1) {
                 // list all
-                System.getProperties().forEach((key, value) -> sender.sendMessage("Property '" + ChatColor.AQUA + key + ChatColor.RESET + "' = \"" + ChatColor.GOLD + value + ChatColor.RESET + "\"."));
+				for(Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+					sender.sendMessage(String.format("Property '%s%s%s' = \"%s%s%s\".",
+						ChatColor.AQUA, entry.getKey(), ChatColor.RESET,
+						ChatColor.GOLD, entry.getValue(), ChatColor.RESET));
+				}
             } else {
                 // get a property
                 String key = args[1].toLowerCase();

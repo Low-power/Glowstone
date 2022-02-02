@@ -71,7 +71,7 @@ public class BlockDispenser extends BlockContainer {
     }
 
     @Override
-    public void updatePhysics(GlowBlock block) {
+    public void updatePhysics(final GlowBlock block) {
         GlowBlock up = block.getRelative(BlockFace.UP);
         boolean powered = block.isBlockPowered() || block.isBlockIndirectlyPowered() ||
                 up.isBlockPowered() || up.isBlockIndirectlyPowered();

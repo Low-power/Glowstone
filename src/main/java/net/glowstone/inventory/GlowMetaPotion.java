@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class GlowMetaPotion extends GlowMetaItem implements PotionMeta {
@@ -83,7 +81,8 @@ public class GlowMetaPotion extends GlowMetaItem implements PotionMeta {
         super.writeNbt(tag);
 
         if (hasCustomEffects()) {
-            List<CompoundTag> customEffects = effects.stream().map(GlowMetaPotion::toNBT).collect(Collectors.toList());
+            List<CompoundTag> customEffects = new ArrayList<>(effects.size());
+			for(PotionEffect effect : effects) customEffects.add(toNBT(effect));
             tag.putCompoundList("CustomEffects", customEffects);
         }
         tag.putString("Potion", dataToString());

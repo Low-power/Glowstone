@@ -12,13 +12,19 @@ import org.bukkit.inventory.ItemStack;
  */
 public final class GlowEnchantment extends Enchantment implements Choice {
 
-    private static final MaterialMatcher SWORD_OR_AXE = item -> EnchantmentTarget.WEAPON.includes(item)
+    private static final MaterialMatcher SWORD_OR_AXE = new MaterialMatcher() {
+		public boolean matches(Material item) {
+			return EnchantmentTarget.WEAPON.includes(item)
             || item.equals(Material.WOOD_AXE)
             || item.equals(Material.STONE_AXE)
             || item.equals(Material.IRON_AXE)
             || item.equals(Material.DIAMOND_AXE)
             || item.equals(Material.GOLD_AXE);
-    private static final MaterialMatcher BASE_TOOLS = item -> item.equals(Material.WOOD_SPADE)
+		}
+	};
+    private static final MaterialMatcher BASE_TOOLS = new MaterialMatcher() {
+		public boolean matches(Material item) {
+			return item.equals(Material.WOOD_SPADE)
             || item.equals(Material.STONE_SPADE)
             || item.equals(Material.IRON_SPADE)
             || item.equals(Material.DIAMOND_SPADE)
@@ -33,14 +39,23 @@ public final class GlowEnchantment extends Enchantment implements Choice {
             || item.equals(Material.IRON_AXE)
             || item.equals(Material.DIAMOND_AXE)
             || item.equals(Material.GOLD_AXE);
-    private static final MaterialMatcher DIGGING_TOOLS = material -> BASE_TOOLS.matches(material)
-            || material == Material.SHEARS;
-    private static final MaterialMatcher ALL_THINGS = material -> EnchantmentTarget.TOOL.includes(material)
+		}
+	};
+    private static final MaterialMatcher DIGGING_TOOLS = new MaterialMatcher() {
+		public boolean matches(Material material) {
+			return BASE_TOOLS.matches(material) || material == Material.SHEARS;
+		}
+	};
+    private static final MaterialMatcher ALL_THINGS = new MaterialMatcher() {
+		public boolean matches(Material material) {
+			return EnchantmentTarget.TOOL.includes(material)
             || EnchantmentTarget.WEAPON.includes(material)
             || EnchantmentTarget.ARMOR.includes(material)
             || material == Material.FISHING_ROD
             || material == Material.BOW
             || material == Material.CARROT_STICK;
+		}
+	};
     private static final int GROUP_NONE = 0;
     private static final int GROUP_PROTECT = 1;
     private static final int GROUP_ATTACK = 2;

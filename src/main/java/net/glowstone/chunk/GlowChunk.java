@@ -58,7 +58,7 @@ public final class GlowChunk implements Chunk {
     /**
      * The entities that reside in this chunk.
      */
-    private final Set<GlowEntity> entities = ConcurrentHashMap.newKeySet(4);
+    private final Set<GlowEntity> entities = Collections.newSetFromMap(new ConcurrentHashMap<GlowEntity, Boolean>(4));
     /**
      * The array of chunk sections this chunk contains, or null if it is unloaded.
      */

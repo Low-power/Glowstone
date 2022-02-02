@@ -580,7 +580,12 @@ public abstract class GlowEntity implements Entity {
 
         if (passengerChanged) {
             //this method will not call for this player, we don't need check SELF_ID
-            result.add(new SetPassengerMessage(getEntityId(), getPassengers().stream().mapToInt(Entity::getEntityId).toArray()));
+			List<Entity> passengers = getPassengers();
+			int[] passenger_entity_ids = new int[passengers.size()];
+			for(int i = 0; i < passenger_entity_ids.length; i++) {
+				passenger_entity_ids[i] = passengers.get(i).getEntityId();
+			}
+            result.add(new SetPassengerMessage(getEntityId(), passenger_entity_ids));
         }
 
         return result;
@@ -1022,7 +1027,10 @@ public abstract class GlowEntity implements Entity {
     @Override
     public void playEffect(EntityEffect type) {
         EntityStatusMessage message = new EntityStatusMessage(id, type);
-        world.getRawPlayers().stream().filter(player -> player.canSeeEntity(this)).forEach(player -> player.getSession().send(message));
+		for(GlowPlayer player : world.getRawPlayers()) {
+			if(!player.canSeeEntity(this)) continue;
+			player.getSession().send(message);
+		}
     }
 
     @Override

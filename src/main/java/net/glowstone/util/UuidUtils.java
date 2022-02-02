@@ -10,9 +10,12 @@ public final class UuidUtils {
     private UuidUtils() {
     }
 
-    public static UUID fromFlatString(String str) {
-        // xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        return new UUID(Long.parseUnsignedLong(str.substring(0, 16), 16), Long.parseUnsignedLong(str.substring(16), 16));
+    public static UUID fromFlatString(String s) {
+		if(s.length() != 32) throw new IllegalArgumentException("string must be 32 characters long");
+		StringBuilder sb = new StringBuilder(s);
+		// xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+		sb.insert('-', 8).insert('-', 13).insert('-', 18).insert('-', 23);
+		return UUID.fromString(sb.toString());
     }
 
     public static String toFlatString(UUID uuid) {

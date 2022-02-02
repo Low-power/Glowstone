@@ -132,7 +132,9 @@ public class EntityRegistry {
 
     public static List<CustomEntityDescriptor> getRegisteredCustomEntities() {
         List<CustomEntityDescriptor> entities = new ArrayList<>();
-        CUSTOM_ENTITIES.values().forEach(entities::add);
+		for(CustomEntityDescriptor e : CUSTOM_ENTITIES.values()) {
+			entities.add(e);
+		}
         return Collections.unmodifiableList(entities);
     }
 }

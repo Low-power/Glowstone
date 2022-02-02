@@ -118,11 +118,11 @@ public final class EncryptionKeyResponseHandler implements MessageHandler<GlowSe
                 return;
             }
 
-            String name = (String) json.get("name");
-            String id = (String) json.get("id");
+            final String name = (String) json.get("name");
+            final String id = (String) json.get("id");
 
             // parse UUID
-            UUID uuid;
+            final UUID uuid;
             try {
                 uuid = UuidUtils.fromFlatString(id);
             } catch (IllegalArgumentException ex) {
@@ -134,7 +134,7 @@ public final class EncryptionKeyResponseHandler implements MessageHandler<GlowSe
             JSONArray propsArray = (JSONArray) json.get("properties");
 
             // parse properties
-            List<PlayerProperty> properties = new ArrayList<>(propsArray.size());
+            final List<PlayerProperty> properties = new ArrayList<>(propsArray.size());
             for (Object obj : propsArray) {
                 JSONObject propJson = (JSONObject) obj;
                 String propName = (String) propJson.get("name");
@@ -150,7 +150,11 @@ public final class EncryptionKeyResponseHandler implements MessageHandler<GlowSe
             }
 
             // spawn player
-            session.getServer().getScheduler().runTask(null, () -> session.setPlayer(new PlayerProfile(name, uuid, properties)));
+            session.getServer().getScheduler().runTask(null, new Runnable() {
+					public void run() {
+						session.setPlayer(new PlayerProfile(name, uuid, properties));
+					}
+				});
         }
 
         @Override

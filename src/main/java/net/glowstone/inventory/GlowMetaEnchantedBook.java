@@ -78,8 +78,9 @@ public class GlowMetaEnchantedBook extends GlowMetaItem implements EnchantmentSt
     }
 
     @Override
+	@SuppressWarnings("unchecked")
     public Map<Enchantment, Integer> getStoredEnchants() {
-        return hasStoredEnchants() ? Collections.unmodifiableMap(storedEnchants) : Collections.emptyMap();
+        return hasStoredEnchants() ? Collections.unmodifiableMap(storedEnchants) : (Map)Collections.emptyMap();
     }
 
     @Override

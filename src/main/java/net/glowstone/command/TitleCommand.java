@@ -20,8 +20,9 @@ import java.util.Map;
 
 public class TitleCommand extends BukkitCommand {
 
+	@SuppressWarnings("unchecked")
     public TitleCommand() {
-        super("title", "Sends a title to the specified player(s)", "/title <player> <title|subtitle|times|clear|reset> ...", Collections.emptyList());
+        super("title", "Sends a title to the specified player(s)", "/title <player> <title|subtitle|times|clear|reset> ...", (List)Collections.emptyList());
         setPermission("glowstone.command.title");
     }
 

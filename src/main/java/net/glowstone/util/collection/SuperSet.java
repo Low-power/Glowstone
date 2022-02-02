@@ -26,9 +26,7 @@ public class SuperSet<E> extends SuperCollection<E> implements Set<E> {
     @Override
     public Set<E> asClone() {
         Set<E> output = new HashSet<>();
-
-        getParents().forEach(output::addAll);
-
+		for(Set<E> set : getParents()) output.addAll(set);
         return output;
     }
 

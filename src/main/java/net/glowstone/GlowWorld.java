@@ -61,7 +61,6 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * A class which represents the in-game world.
@@ -484,7 +483,9 @@ public final class GlowWorld implements World {
     private void informPlayersOfTime() {
         if (worldAge % (30 * TICKS_PER_SECOND) == 0) {
             // Only send the time every 30 seconds; clients are smart.
-            getRawPlayers().forEach(GlowPlayer::sendTime);
+			for(GlowPlayer player : getRawPlayers()) {
+				player.sendTime();
+			}
         }
     }
 
@@ -501,11 +502,14 @@ public final class GlowWorld implements World {
     }
 
     private void resetEntities(List<GlowEntity> entities) {
-        entities.forEach(GlowEntity::reset);
+		for(GlowEntity entity : entities) entity.reset();
     }
 
     private void pulsePlayers(List<GlowPlayer> players) {
-        players.stream().filter(Objects::nonNull).forEach(GlowEntity::pulse);
+		for(GlowPlayer player : players) {
+			if(player == null) continue;
+			player.pulse();
+		}
     }
 
     private void handleSleepAndWake(List<GlowPlayer> players) {
@@ -583,13 +587,13 @@ public final class GlowWorld implements World {
         searchBox.maxCorner.add(vec).add(vec2);
         List<LivingEntity> livingEntities = new LinkedList<>();
         // make sure entity can see sky
-        getEntityManager().getEntitiesInside(searchBox, null).stream().filter(entity -> entity instanceof LivingEntity && !entity.isDead()).forEach(entity -> {
-            Vector pos = entity.getLocation().toVector();
-            int minY = getHighestBlockYAt(pos.getBlockX(), pos.getBlockZ());
-            if (pos.getBlockY() >= minY) {
-                livingEntities.add((LivingEntity) entity);
-            }
-        });
+		for(Entity entity : getEntityManager().getEntitiesInside(searchBox, null)) {
+			if(!(entity instanceof LivingEntity)) continue;
+			if(entity.isDead()) continue;
+			Vector pos = entity.getLocation().toVector();
+			int minY = getHighestBlockYAt(pos.getBlockX(), pos.getBlockZ());
+			if(pos.getBlockY() >= minY) livingEntities.add((LivingEntity)entity);
+		}
 
         // re-target lightning if required
         if (!livingEntities.isEmpty()) {
@@ -644,7 +648,7 @@ public final class GlowWorld implements World {
 
     @Override
     public List<Player> getPlayers() {
-        return new ArrayList<>(entities.getAll(GlowPlayer.class));
+        return new ArrayList<Player>(entities.getAll(GlowPlayer.class));
     }
 
     /**
@@ -669,12 +673,17 @@ public final class GlowWorld implements World {
 
     @Override
     public List<Entity> getEntities() {
-        return new ArrayList<>(entities.getAll());
+        return new ArrayList<Entity>(entities.getAll());
     }
 
     @Override
     public List<LivingEntity> getLivingEntities() {
-        return entities.getAll().stream().filter(e -> e instanceof GlowLivingEntity).map(e -> (GlowLivingEntity) e).collect(Collectors.toCollection(LinkedList::new));
+		LinkedList<LivingEntity> list = new LinkedList<>();
+		for(Entity e : entities.getAll()) {
+			if(!(e instanceof GlowLivingEntity)) continue;
+			list.add((LivingEntity)e);
+		}
+		return list;
     }
 
     @Override
@@ -687,7 +696,12 @@ public final class GlowWorld implements World {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Entity> Collection<T> getEntitiesByClass(Class<T> cls) {
-        return entities.getAll().stream().filter(e -> cls.isAssignableFrom(e.getClass())).map(e -> (T) e).collect(Collectors.toCollection(ArrayList::new));
+		ArrayList<T> list = new ArrayList<>();
+		for(Entity e : entities.getAll()) {
+			if(!cls.isInstance(e)) continue;
+			list.add((T)e);
+		}
+		return list;
     }
 
     @Override
@@ -969,11 +983,13 @@ public final class GlowWorld implements World {
         writeWorldData(async);
 
         // save chunks
-        maybeAsync(async, () -> {
+        maybeAsync(async, new Runnable() {
+				public void run() {
             for (GlowChunk chunk : chunks.getLoadedChunks()) {
                 chunks.performSave(chunk);
             }
-        });
+				}
+			});
 
         // save players
         for (GlowPlayer player : getRawPlayers()) {
@@ -1142,8 +1158,12 @@ public final class GlowWorld implements World {
     }
 
     @Override
-    public void getChunkAtAsync(int x, int z, ChunkLoadCallback cb) {
-        Bukkit.getServer().getScheduler().runTaskAsynchronously(null, () -> cb.onLoad(chunks.getChunk(x, z)));
+    public void getChunkAtAsync(final int x, final int z, final ChunkLoadCallback cb) {
+        Bukkit.getServer().getScheduler().runTaskAsynchronously(null, new Runnable() {
+				public void run() {
+					cb.onLoad(chunks.getChunk(x, z));
+				}
+			});
     }
 
     @Override
@@ -1186,7 +1206,11 @@ public final class GlowWorld implements World {
 
     @Override
     public void loadChunk(int x, int z) {
-        getChunkAtAsync(x, z, Chunk::load);
+        getChunkAtAsync(x, z, new ChunkLoadCallback() {
+				public void onLoad(Chunk chunk) {
+					chunk.load();
+				}
+			});
     }
 
     @Override
@@ -1220,10 +1244,14 @@ public final class GlowWorld implements World {
     }
 
     @Override
-    public boolean unloadChunkRequest(int x, int z, boolean safe) {
+    public boolean unloadChunkRequest(final int x, final int z, final boolean safe) {
         if (safe && isChunkInUse(x, z)) return false;
 
-        server.getScheduler().runTask(null, () -> unloadChunk(x, z, safe));
+        server.getScheduler().runTask(null, new Runnable() {
+				public void run() {
+					unloadChunk(x, z, safe);
+				}
+			});
 
         return true;
     }
@@ -1274,8 +1302,12 @@ public final class GlowWorld implements World {
     }
 
     @Override
-    public void setBiome(int x, int z, Biome bio) {
-        getChunkAtAsync(x >> 4, z >> 4, chunk -> ((GlowChunk) chunk).setBiome(x & 0xF, z & 0xF, GlowBiome.getId(bio)));
+    public void setBiome(final int x, final int z, final Biome bio) {
+        getChunkAtAsync(x >> 4, z >> 4, new ChunkLoadCallback() {
+				public void onLoad(Chunk chunk) {
+					((GlowChunk)chunk).setBiome(x & 0xF, z & 0xF, GlowBiome.getId(bio));
+				}
+			});
     }
 
     @Override
@@ -1322,7 +1354,10 @@ public final class GlowWorld implements World {
                 }
                 if (!spawnEvent.isCancelled()) {
                     List<Message> spawnMessage = entity.createSpawnMessage();
-                    getRawPlayers().stream().filter(player -> player.canSeeEntity(impl)).forEach(player -> player.getSession().sendAll(spawnMessage.toArray(new Message[spawnMessage.size()])));
+					for(GlowPlayer player : getRawPlayers()) {
+						if(!player.canSeeEntity(impl)) continue;
+						player.getSession().sendAll(spawnMessage.toArray(new Message[spawnMessage.size()]));
+					}
                 } else {
                     // TODO: separate spawning and construction for better event cancellation
                     entity.remove();
@@ -1436,7 +1471,9 @@ public final class GlowWorld implements World {
     public void setTime(long time) {
         this.time = (time % DAY_LENGTH + DAY_LENGTH) % DAY_LENGTH;
 
-        getRawPlayers().forEach(GlowPlayer::sendTime);
+		for(GlowPlayer player : getRawPlayers()) {
+			player.sendTime();
+		}
     }
 
     @Override
@@ -1478,7 +1515,9 @@ public final class GlowWorld implements World {
 
         // update players
         if (previouslyRaining != currentlyRaining) {
-            getRawPlayers().forEach(GlowPlayer::sendWeather);
+			for(GlowPlayer player : getRawPlayers()) {
+				player.sendWeather();
+			}
         }
     }
 
@@ -1537,18 +1576,19 @@ public final class GlowWorld implements World {
     private void updateWeather() {
         float previousRainDensity = currentRainDensity;
         float previousSkyDarkness = currentSkyDarkness;
-        float rainDensityModifier = currentlyRaining ? .01F : -.01F;
-        float skyDarknessModifier = currentlyThundering ? .01F : -.01F;
+        float rainDensityModifier = currentlyRaining ? 0.01F : -0.01F;
+        float skyDarknessModifier = currentlyThundering ? 0.01F : -0.01F;
         currentRainDensity = Math.max(0, Math.min(1, previousRainDensity + rainDensityModifier));
         currentSkyDarkness = Math.max(0, Math.min(1, previousSkyDarkness + skyDarknessModifier));
 
-        if (previousRainDensity != currentRainDensity) {
-            getRawPlayers().forEach(GlowPlayer::sendRainDensity);
-        }
-
-        if (previousSkyDarkness != currentSkyDarkness) {
-            getRawPlayers().forEach(GlowPlayer::sendSkyDarkness);
-        }
+		for(GlowPlayer player : getRawPlayers()) {
+			if(previousRainDensity != currentRainDensity) {
+				player.sendRainDensity();
+			}
+			if(previousSkyDarkness != currentSkyDarkness) {
+				player.sendSkyDarkness();
+			}
+		}
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1607,7 +1647,10 @@ public final class GlowWorld implements World {
     @Override
     public void playEffect(Location location, Effect effect, int data, int radius) {
         int radiusSquared = radius * radius;
-        getRawPlayers().stream().filter(player -> player.getLocation().distanceSquared(location) <= radiusSquared).forEach(player -> player.playEffect(location, effect, data));
+		for(GlowPlayer player : getRawPlayers()) {
+			if(player.getLocation().distanceSquared(location) > radiusSquared) continue;
+			player.playEffect(location, effect, data);
+		}
     }
 
     @Override
@@ -1622,7 +1665,11 @@ public final class GlowWorld implements World {
 
     public void playEffectExceptTo(Location location, Effect effect, int data, int radius, Player exclude) {
         int radiusSquared = radius * radius;
-        getRawPlayers().stream().filter(player -> !player.equals(exclude) && player.getLocation().distanceSquared(location) <= radiusSquared).forEach(player -> player.playEffect(location, effect, data));
+		for(GlowPlayer player : getRawPlayers()) {
+			if(player.equals(exclude)) continue;
+			if(player.getLocation().distanceSquared(location) > radiusSquared) continue;
+			player.playEffect(location, effect, data);
+		}
     }
 
     @Override
@@ -1640,7 +1687,10 @@ public final class GlowWorld implements World {
         if (location == null || sound == null) return;
 
         double radiusSquared = Math.pow(volume * 16, 2);
-        getRawPlayers().stream().filter(player -> player.getLocation().distanceSquared(location) <= radiusSquared).forEach(player -> player.playSound(location, sound, category, volume, pitch));
+		for(GlowPlayer player : getRawPlayers()) {
+			if(player.getLocation().distanceSquared(location) > radiusSquared) continue;
+			player.playSound(location, sound, category, volume, pitch);
+		}
     }
 
     @Override
@@ -1670,9 +1720,10 @@ public final class GlowWorld implements World {
         if (loc == null || particle == null) return;
 
         double radiusSquared = radius * radius;
-
-
-        getRawPlayers().stream().filter(player -> player.getLocation().distanceSquared(loc) <= radiusSquared).forEach(player -> player.spigot().playEffect(loc, particle, id, data, offsetX, offsetY, offsetZ, speed, amount, radius));
+		for(GlowPlayer player : getRawPlayers()) {
+			if(player.getLocation().distanceSquared(loc) > radiusSquared) continue;
+			player.spigot().playEffect(loc, particle, id, data, offsetX, offsetY, offsetZ, speed, amount, radius);
+		}
     }
 
     /**
@@ -1681,17 +1732,19 @@ public final class GlowWorld implements World {
      * @param async Whether to write asynchronously.
      */
     private void writeWorldData(boolean async) {
-        maybeAsync(async, () -> {
-            try {
-                storageProvider.getMetadataService().writeWorldData();
-                storageProvider.getScoreboardIoService().save();
-            } catch (IOException e) {
-                server.getLogger().severe("Could not save metadata for world: " + getName());
-                e.printStackTrace();
-            }
+        maybeAsync(async, new Runnable() {
+				public void run() {
+					try {
+						storageProvider.getMetadataService().writeWorldData();
+						storageProvider.getScoreboardIoService().save();
+					} catch (IOException e) {
+						server.getLogger().severe("Could not save metadata for world: " + getName());
+						e.printStackTrace();
+					}
 
-            storageProvider.getStructureDataService().writeStructuresData(structures);
-        });
+					storageProvider.getStructureDataService().writeStructuresData(structures);
+				}
+			});
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1768,7 +1821,9 @@ public final class GlowWorld implements World {
         }
         if (rule.equals("doDaylightCycle")) {
             // inform clients about the daylight cycle change
-            getRawPlayers().forEach(GlowPlayer::sendTime);
+			for(GlowPlayer player : getRawPlayers()) {
+				player.sendTime();
+			}
         } else if (rule.equals("reducedDebugInfo")) {
             // inform clients about the debug info change
             EntityStatusMessage message = new EntityStatusMessage(0, gameRules.getBoolean("reducedDebugInfo") ? EntityStatusMessage.ENABLE_REDUCED_DEBUG_INFO : EntityStatusMessage.DISABLE_REDUCED_DEBUG_INFO);

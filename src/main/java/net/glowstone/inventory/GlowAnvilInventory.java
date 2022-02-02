@@ -12,7 +12,8 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-
+import org.bukkit.enchantments.Enchantment;
+import java.util.Map;
 import java.util.Objects;
 
 public class GlowAnvilInventory extends GlowInventory implements AnvilInventory {
@@ -100,11 +101,12 @@ public class GlowAnvilInventory extends GlowInventory implements AnvilInventory 
             } else {
                 result = getResultItem();
             }
-            book.getStoredEnchants().forEach((enchantment, level) -> {
-                if (enchantment.canEnchantItem(result) || result.getType() == Material.ENCHANTED_BOOK) {
-                    result.addUnsafeEnchantment(enchantment, level);
-                }
-            });
+			for(Map.Entry<Enchantment, Integer> entry : book.getStoredEnchants().entrySet()) {
+				Enchantment enchantment = entry.getKey();
+				if(!enchantment.canEnchantItem(result)) continue;
+				if(result.getType() != Material.ENCHANTED_BOOK) continue;
+				result.addUnsafeEnchantment(enchantment, entry.getValue().intValue());
+			}
             return result;
         }
         return null;

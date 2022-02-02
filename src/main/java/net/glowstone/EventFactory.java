@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -38,27 +39,30 @@ public final class EventFactory {
      * @param <T> The type of the event.
      * @return the called event
      */
-    public static <T extends Event> T callEvent(T event) {
-        GlowServer server = (GlowServer) Bukkit.getServer();
+    public static <T extends Event> T callEvent(final T event) {
+        final GlowServer server = (GlowServer) Bukkit.getServer();
 
         if (event.isAsynchronous()) {
             server.getPluginManager().callEvent(event);
             return event;
-        } else {
-            FutureTask<T> task = new FutureTask<>(() -> server.getPluginManager().callEvent(event), event);
-            server.getScheduler().scheduleInTickExecution(task);
-            try {
-                return task.get();
-            } catch (InterruptedException e) {
-                GlowServer.logger.log(Level.WARNING, "Interrupted while handling " + event.getClass().getSimpleName());
-                return event;
-            } catch (CancellationException e) {
-                GlowServer.logger.log(Level.WARNING, "Not handling event " + event.getClass().getSimpleName() + " due to shutdown");
-                return event;
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e); // No checked exceptions declared for callEvent
-            }
         }
+		FutureTask<T> task = new FutureTask<T>(new Runnable() {
+				public void run() {
+					server.getPluginManager().callEvent(event);
+				}
+			}, event);
+		server.getScheduler().scheduleInTickExecution(task);
+		try {
+			return task.get();
+		} catch (InterruptedException e) {
+			GlowServer.logger.log(Level.WARNING, "Interrupted while handling " + event.getClass().getSimpleName());
+			return event;
+		} catch (CancellationException e) {
+			GlowServer.logger.log(Level.WARNING, "Not handling event " + event.getClass().getSimpleName() + " due to shutdown");
+			return event;
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e); // No checked exceptions declared for callEvent
+		}
     }
 
     ////////////////////////////////////////////////////////////////////////////

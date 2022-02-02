@@ -24,9 +24,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class Explosion {
 
@@ -198,7 +196,9 @@ public final class Explosion {
 
     private List<Block> toBlockList(Collection<BlockVector> locations) {
         List<Block> blocks = new ArrayList<>(locations.size());
-        blocks.addAll(locations.stream().map(location -> world.getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ())).collect(Collectors.toList()));
+		for(BlockVector location : locations) {
+			blocks.add(world.getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+		}
         return blocks;
     }
 
@@ -298,7 +298,12 @@ public final class Explosion {
 
     private LivingEntity[] getNearbyEntities() {
         Collection<Entity> entities = location.getWorld().getNearbyEntities(location, power, power, power);
-        return entities.stream().filter(entity -> entity instanceof LivingEntity).toArray(LivingEntity[]::new);
+		Iterator<Entity> iterator = entities.iterator();
+		while(iterator.hasNext()) {
+			Entity entity = iterator.next();
+			if(!(entity instanceof LivingEntity)) iterator.remove();
+		}
+		return entities.toArray(new LivingEntity[0]);	
     }
 
     private double distanceTo(LivingEntity entity) {

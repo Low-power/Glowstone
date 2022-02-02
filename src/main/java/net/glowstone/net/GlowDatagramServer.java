@@ -9,6 +9,8 @@ import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.Future;
 import net.glowstone.GlowServer;
 
 import java.net.InetSocketAddress;
@@ -30,14 +32,17 @@ public abstract class GlowDatagramServer extends GlowNetworkServer {
                 .option(ChannelOption.SO_KEEPALIVE, true);
     }
 
-    public ChannelFuture bind(InetSocketAddress address) {
-        return this.bootstrap.bind(address).addListener(future -> {
-            if (future.isSuccess()) {
-                onBindSuccess(address);
-            } else {
-                onBindFailure(address, future.cause());
-            }
-        });
+    public ChannelFuture bind(final InetSocketAddress address) {
+		GenericFutureListener<Future<Void>> listener = new GenericFutureListener<Future<Void>>() {
+			public void operationComplete(Future<Void> future) {
+				if (future.isSuccess()) {
+					onBindSuccess(address);
+				} else {
+					onBindFailure(address, future.cause());
+				}
+			}
+		};
+		return this.bootstrap.bind(address).addListener(listener);
     }
 
     public void shutdown() {

@@ -4,7 +4,7 @@ import net.glowstone.entity.meta.MetadataIndex;
 import org.junit.Test;
 
 import java.util.HashMap;
-
+import java.util.Map;
 import static org.junit.Assert.fail;
 
 /**
@@ -25,7 +25,13 @@ public class MetadataIndexTest {
                 continue;
             }
 
-            seen.entrySet().stream().filter(entry -> clazz != entry.getKey() && clazz.isAssignableFrom(entry.getKey())).forEach(entry -> fail("Index " + index + "(" + clazz.getSimpleName() + ") follows index " + entry.getValue() + "(" + entry.getKey().getSimpleName() + ") which it parents"));
+			for(Map.Entry<Class<?>, MetadataIndex> entry : seen.entrySet()) {
+				Class<?> key = entry.getKey();
+				if(key == clazz) continue;
+				if(!clazz.isAssignableFrom(key)) continue;
+				fail(String.format("Index %s(%s) follows index %s(%s) which it parents",
+					index, clazz.getSimpleName(), entry.getValue(), key.getSimpleName()));
+			}
 
             if (!seen.containsKey(clazz)) {
                 seen.put(clazz, index);
@@ -56,10 +62,18 @@ public class MetadataIndexTest {
             // check for duplication
             // check that class is a parent
             // look for matching index
-            map.entrySet().stream().filter(entry -> entry.getKey().isAssignableFrom(clazz)).filter(entry -> entry.getValue().containsKey(index.getIndex())).forEach(entry -> fail("Index " + index + "(" + clazz.getSimpleName() + ") conflicts with " + entry.getValue().get(index.getIndex()) + "(" + entry.getKey().getSimpleName() + ")"));
+			for(Map.Entry<Class<?>, HashMap<Integer, MetadataIndex>> entry : map.entrySet()) {
+				Class<?> key = entry.getKey();
+				if(!key.isAssignableFrom(clazz)) continue;
+				HashMap<Integer, MetadataIndex> value = entry.getValue();
+				if(!value.containsKey(index.getIndex())) continue;
+				fail(String.format("Index %s(%s) conflicts with %s(%s)",
+					index, clazz.getSimpleName(), value.get(index.getIndex()), key.getSimpleName()));
+			}
 
             // insert this index
-            HashMap<Integer, MetadataIndex> classMap = map.computeIfAbsent(index.getAppliesTo(), k -> new HashMap<>());
+            HashMap<Integer, MetadataIndex> classMap = map.get(index.getAppliesTo());
+			if(classMap == null) classMap = new HashMap<>();
             classMap.put(index.getIndex(), index);
         }
     }

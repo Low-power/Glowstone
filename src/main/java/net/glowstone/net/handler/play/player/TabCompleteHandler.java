@@ -8,7 +8,7 @@ import net.glowstone.net.message.play.player.TabCompleteResponseMessage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.util.StringUtil;
-
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +46,7 @@ public final class TabCompleteHandler implements MessageHandler<GlowSession, Tab
                     completions.add(name);
                 }
             }
-            completions.sort(String.CASE_INSENSITIVE_ORDER);
+			Collections.sort(completions, String.CASE_INSENSITIVE_ORDER);
         }
 
         // call event and send response

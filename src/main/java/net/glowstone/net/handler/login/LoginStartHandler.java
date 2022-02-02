@@ -17,7 +17,7 @@ import java.util.UUID;
 public final class LoginStartHandler implements MessageHandler<GlowSession, LoginStartMessage> {
 
     @Override
-    public void handle(GlowSession session, LoginStartMessage message) {
+    public void handle(final GlowSession session, LoginStartMessage message) {
         String name = message.getUsername();
 
         if (session.getServer().getOnlineMode()) {
@@ -52,8 +52,12 @@ public final class LoginStartHandler implements MessageHandler<GlowSession, Logi
                 return;
             }
 
-            PlayerProfile finalProfile = profile;
-            session.getServer().getScheduler().runTask(null, () -> session.setPlayer(finalProfile));
+            final PlayerProfile finalProfile = profile;
+            session.getServer().getScheduler().runTask(null, new Runnable() {
+					public void run() {
+						session.setPlayer(finalProfile);
+					}
+				});
         }
     }
 }

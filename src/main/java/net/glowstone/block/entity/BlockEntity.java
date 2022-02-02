@@ -42,7 +42,10 @@ public abstract class BlockEntity {
      */
     public final void updateInRange() {
         Key key = new Key(block.getChunk().getX(), block.getChunk().getZ());
-        block.getWorld().getRawPlayers().stream().filter(player -> player.canSeeChunk(key)).forEach(this::update);
+		for(GlowPlayer player : block.getWorld().getRawPlayers()) {
+			if(!player.canSeeChunk(key)) continue;
+			update(player);
+		}
     }
 
     ////////////////////////////////////////////////////////////////////////////

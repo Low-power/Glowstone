@@ -10,6 +10,8 @@ import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.Future;
 import net.glowstone.GlowServer;
 
 import java.net.InetSocketAddress;
@@ -39,14 +41,18 @@ public abstract class GlowSocketServer extends GlowNetworkServer {
                 .childOption(ChannelOption.SO_KEEPALIVE, true);
     }
 
-    public ChannelFuture bind(InetSocketAddress address) {
-        ChannelFuture cfuture = this.bootstrap.bind(address).addListener(future -> {
-            if (future.isSuccess()) {
-                onBindSuccess(address);
-            } else {
-                onBindFailure(address, future.cause());
-            }
-        });
+    public ChannelFuture bind(final InetSocketAddress address) {
+        ChannelFuture cfuture = this.bootstrap.bind(address).addListener(
+			new GenericFutureListener<Future<Void>>() {
+				public void operationComplete(Future<Void> future) {
+					if (future.isSuccess()) {
+						onBindSuccess(address);
+					} else {
+						onBindFailure(address, future.cause());
+					}
+				}
+			}
+		);
         channel = cfuture.channel();
         return cfuture;
     }

@@ -22,7 +22,7 @@ public class RconServer extends GlowSocketServer {
      */
     private ServerBootstrap bootstrap = new ServerBootstrap();
 
-    public RconServer(GlowServer server, CountDownLatch latch, String password) {
+    public RconServer(GlowServer server, CountDownLatch latch, final String password) {
         super(server, latch);
         bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override

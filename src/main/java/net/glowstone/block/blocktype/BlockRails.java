@@ -39,12 +39,11 @@ public class BlockRails extends BlockNeedsAttached {
     }
 
     private void updateNeighbors(GlowBlock block, RailDirection direction) {
-        direction.getNeighborRails(block).forEach(rail -> {
-            // check if the rail is stable
-            if (isUnstable(rail, block) && !isConnected(rail, block)) {
-                rail.setData((byte) getRailDirection(rail).ordinal());
-            }
-        });
+		for(GlowBlock rail : direction.getNeighborRails(block)) {
+			if (isUnstable(rail, block) && !isConnected(rail, block)) {
+				rail.setData((byte) getRailDirection(rail).ordinal());
+			}
+		}
     }
 
     private static boolean isConnected(GlowBlock rail, GlowBlock neighborRail) {
@@ -61,7 +60,13 @@ public class BlockRails extends BlockNeedsAttached {
 
         // equals because blocks at the same location are not the same at the moment.
         // TODO: !rail.equals(neighborRail) -> rail != neighborRail
-        return neighborRails.stream().filter(rail -> !rail.equals(neighborRail) && isConnected(block, rail)).count() != 2;
+		int count = 0;
+		for(GlowBlock rail : neighborRails) {
+			if(rail.equals(neighborRail)) continue;
+			if(!isConnected(block, rail)) continue;
+			if(++count > 2) return true;
+		}
+		return count < 2;
     }
 
     private static RailDirection getRailDirection(GlowBlock rail) {

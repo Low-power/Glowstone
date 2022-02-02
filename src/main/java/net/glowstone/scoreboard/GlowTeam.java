@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -202,7 +200,9 @@ public final class GlowTeam implements Team {
     @Deprecated
     public Set<OfflinePlayer> getPlayers() throws IllegalStateException {
         Set<OfflinePlayer> playerObjectSet = new HashSet<>(players.size());
-        playerObjectSet.addAll(players.stream().map(s -> new GlowOfflinePlayer((GlowServer) Bukkit.getServer(), s)).collect(Collectors.toList()));
+		for(String s : players) {
+			playerObjectSet.add(new GlowOfflinePlayer((GlowServer)Bukkit.getServer(), s));
+		}
         return playerObjectSet;
     }
 

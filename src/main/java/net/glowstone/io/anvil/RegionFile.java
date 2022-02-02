@@ -217,7 +217,7 @@ public class RegionFile {
             } catch (ZipException e) {
                 if (e.getMessage().equals("Not in GZIP format")) {
                     GlowServer.logger.info("Incorrect region version, switching to zlib...");
-                    file.seek((sectorNumber * SECTOR_BYTES) + Integer.BYTES);
+                    file.seek((sectorNumber * SECTOR_BYTES) + 4);
                     file.write(VERSION_DEFLATE);
                     return new DataInputStream(new BufferedInputStream(new InflaterInputStream(new ByteArrayInputStream(data), new Inflater(), 2048)));
                 }

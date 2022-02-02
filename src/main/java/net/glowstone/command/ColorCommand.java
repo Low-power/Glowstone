@@ -3,7 +3,7 @@ package net.glowstone.command;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
-
+import java.util.List;
 import java.util.Collections;
 
 /**
@@ -11,8 +11,9 @@ import java.util.Collections;
  */
 public class ColorCommand extends BukkitCommand {
 
+	@SuppressWarnings("unchecked")
     public ColorCommand() {
-        super("colors", "Display all colors.", "/colors", Collections.emptyList());
+        super("colors", "Display all colors.", "/colors", (List)Collections.emptyList());
     }
 
     @Override

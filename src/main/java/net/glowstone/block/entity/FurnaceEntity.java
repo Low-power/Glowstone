@@ -16,6 +16,7 @@ import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.inventory.InventoryView.Property;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
+import org.bukkit.entity.HumanEntity;
 
 public class FurnaceEntity extends ContainerEntity {
 
@@ -139,12 +140,12 @@ public class FurnaceEntity extends ContainerEntity {
                 cookTime = 0;
             }
         }
-        inv.getViewersSet().forEach(human -> {
-            human.setWindowProperty(Property.BURN_TIME, burnTime);
-            human.setWindowProperty(Property.TICKS_FOR_CURRENT_FUEL, burnTimeFuel);
-            human.setWindowProperty(Property.COOK_TIME, cookTime);
-            human.setWindowProperty(Property.TICKS_FOR_CURRENT_SMELTING, 200);
-        });
+		for(HumanEntity human : inv.getViewersSet()) {
+			human.setWindowProperty(Property.BURN_TIME, burnTime);
+			human.setWindowProperty(Property.TICKS_FOR_CURRENT_FUEL, burnTimeFuel);
+			human.setWindowProperty(Property.COOK_TIME, cookTime);
+			human.setWindowProperty(Property.TICKS_FOR_CURRENT_SMELTING, 200);
+		}
         if (!isBurnable && burnTime == 0 && cookTime == 0) {
             getState().getBlock().getWorld().cancelPulse(getState().getBlock());
         }

@@ -6,6 +6,7 @@ import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Shulker;
 import org.bukkit.util.BlockVector;
+import org.bukkit.DyeColor;
 
 public class GlowShulker extends GlowMonster implements Shulker {
 
@@ -72,4 +73,12 @@ public class GlowShulker extends GlowMonster implements Shulker {
     public enum Facing {
         DOWN, UP, NORTH, SOUTH, WEST, EAST
     }
+
+	public DyeColor getColor() {
+		return DyeColor.getByWoolData(metadata.getByte(MetadataIndex.SHULKER_COLOR));
+	}
+
+	public void setColor(DyeColor color) {
+		metadata.set(MetadataIndex.SHULKER_COLOR, color.getWoolData());
+	}
 }

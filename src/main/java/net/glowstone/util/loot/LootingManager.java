@@ -97,10 +97,10 @@ public class LootingManager {
             DefaultLootItem defaultItem = lootItem.getDefaultItem();
             int count = defaultItem.getCount().generate(random, entity);
             int data = 0;
-            if (defaultItem.getData().isPresent()) {
-                data = defaultItem.getData().get().generate(random);
-            } else if (defaultItem.getReflectiveData().isPresent()) {
-                data = ((Number) defaultItem.getReflectiveData().get().process(entity)).intValue();
+            if (defaultItem.getData() != null) {
+                data = defaultItem.getData().generate(random);
+            } else if (defaultItem.getReflectiveData() != null) {
+                data = ((Number)defaultItem.getReflectiveData().process(entity)).intValue();
             }
             String name = defaultItem.getType().generate(random);
             if (name == null) {
@@ -111,20 +111,20 @@ public class LootingManager {
             ConditionalLootItem[] conditions = lootItem.getConditionalItems();
             for (ConditionalLootItem condition : conditions) {
                 if (LootingUtil.conditionValue(entity, condition.getCondition())) {
-                    if (condition.getCount().isPresent()) {
-                        count = condition.getCount().get().generate(random, entity);
+                    if (condition.getCount() != null) {
+                        count = condition.getCount().generate(random, entity);
                     }
-                    if (condition.getType().isPresent()) {
-                        name = condition.getType().get().generate(random);
+                    if (condition.getType() != null) {
+                        name = condition.getType().generate(random);
                         if (name == null) {
                             name = "";
                         }
                         name = name.toUpperCase();
                     }
-                    if (condition.getData().isPresent()) {
-                        data = condition.getData().get().generate(random);
-                    } else if (condition.getReflectiveData().isPresent()) {
-                        data = ((Number) condition.getReflectiveData().get().process(entity)).intValue();
+                    if (condition.getData() != null) {
+                        data = condition.getData().generate(random);
+                    } else if (condition.getReflectiveData() != null) {
+                        data = ((Number)condition.getReflectiveData().process(entity)).intValue();
                     }
                 }
             }

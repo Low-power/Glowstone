@@ -9,18 +9,19 @@ import org.bukkit.command.CommandUtils;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-
+import java.util.List;
 import java.util.Collections;
 
 public class TeleportCommand extends BukkitCommand {
 
     private static final Entity[] NO_ENTITY = new Entity[0];
 
+	@SuppressWarnings("unchecked")
     public TeleportCommand() {
         super("teleport",
                 "Teleports entities to coordinates relative to the sender",
                 "/teleport <target> <x> <y> <z> [<y-rot> <x-rot>]",
-                Collections.emptyList());
+                (List)Collections.emptyList());
         setPermission("glowstone.command.teleport");
     }
 

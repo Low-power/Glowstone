@@ -89,8 +89,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -613,7 +611,9 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
                 destroyIds.add(entity.getEntityId());
                 it.remove();
             } else {
-                entity.createUpdateMessage().forEach(session::send);
+				for(Message message : entity.createUpdateMessage()) {
+					session.send(message);
+				}
             }
         }
         if (!destroyIds.isEmpty()) {
@@ -621,22 +621,28 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
         }
 
         // add entities
-        knownChunks.parallelStream().forEach(key -> {
-            GlowChunk chunk = world.getChunkAt(key.getX(), key.getZ());
-            chunk.getRawEntities().stream()
-                    .filter(entity -> this != entity)
-                    .filter(this::isWithinDistance)
-                    .filter(entity -> !entity.isDead())
-                    .filter(entity -> !knownEntities.contains(entity))
-                    .filter(entity -> !hiddenEntities.contains(entity.getUniqueId()))
-                    .forEach((entity) -> {
-                        knownEntities.add(entity);
-                        entity.createSpawnMessage().forEach(session::send);
-                    });
-        });
+		for(Key key : knownChunks) {
+			GlowChunk chunk = world.getChunkAt(key.getX(), key.getZ());
+			for(GlowEntity entity : chunk.getRawEntities()) {
+				if(entity == this) continue;
+				if(!isWithinDistance(entity)) continue;
+				if(entity.isDead()) continue;
+				if(knownEntities.contains(entity)) continue;
+				if(hiddenEntities.contains(entity.getUniqueId())) continue;
+				knownEntities.add(entity);
+				for(Message message : entity.createSpawnMessage()) {
+					session.send(message);
+				}
+			}
+		}
 
         if (passengerChanged) {
-            session.send(new SetPassengerMessage(SELF_ID, getPassengers().stream().mapToInt(Entity::getEntityId).toArray()));
+			List<Entity> passengers = getPassengers();
+			int[] entity_ids = new int[passengers.size()];
+			for(int i = 0; i < entity_ids.length; i++) {
+				entity_ids[i] = passengers.get(i).getEntityId();
+			}
+            session.send(new SetPassengerMessage(SELF_ID, entity_ids));
         }
         getAttributeManager().sendMessages(session);
     }
@@ -667,7 +673,11 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
                 if (message != null) {
                     Key key = new Key(message.getX() >> 4, message.getZ() >> 4);
                     if (canSeeChunk(key)) {
-                        Map<BlockVector, BlockChangeMessage> map = chunks.computeIfAbsent(key, k -> new HashMap<>());
+                        Map<BlockVector, BlockChangeMessage> map = chunks.get(key);
+						if(map == null) {
+							map = new HashMap<>();
+							chunks.put(key, map);
+						}
                         map.put(new BlockVector(message.getX(), message.getY(), message.getZ()), message);
                     }
                 }
@@ -686,7 +696,7 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
             // now send post-block-change messages
             List<Message> postMessages = new ArrayList<>(afterBlockChanges);
             afterBlockChanges.clear();
-            postMessages.forEach(session::send);
+			for(Message message : postMessages) session.send(message);
         }
     }
 
@@ -718,15 +728,17 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
         }
 
         // sort chunks by distance from player - closer chunks sent first
-        newChunks.sort((a, b) -> {
-            double dx = 16 * a.getX() + 8 - location.getX();
-            double dz = 16 * a.getZ() + 8 - location.getZ();
-            double da = dx * dx + dz * dz;
-            dx = 16 * b.getX() + 8 - location.getX();
-            dz = 16 * b.getZ() + 8 - location.getZ();
-            double db = dx * dx + dz * dz;
-            return Double.compare(da, db);
-        });
+		Collections.sort(newChunks, new Comparator<Key>() {
+				public int compare(Key a, Key b) {
+					double dx = 16 * a.getX() + 8 - location.getX();
+					double dz = 16 * a.getZ() + 8 - location.getZ();
+					double da = dx * dx + dz * dz;
+					dx = 16 * b.getX() + 8 - location.getX();
+					dz = 16 * b.getZ() + 8 - location.getZ();
+					double db = dx * dx + dz * dz;
+					return Double.compare(da, db);
+				}
+			});
 
         // populate then send chunks to the player
         // done in two steps so that all the new chunks are finalized before any of them are sent
@@ -832,7 +844,9 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
         if (event.getRespawnLocation().getWorld().equals(getWorld()) && !knownEntities.isEmpty()) {
             // we need to manually reset all known entities if the player respawns in the same world
             List<Integer> entityIds = new ArrayList<>(knownEntities.size());
-            entityIds.addAll(knownEntities.stream().map(GlowEntity::getEntityId).collect(Collectors.toList()));
+			for(GlowEntity entity : knownEntities) {
+				entityIds.add(Integer.valueOf(entity.getEntityId()));
+			}
             session.send(new DestroyEntitiesMessage(entityIds));
             knownEntities.clear();
         }
@@ -912,7 +926,10 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
      * @param updateMessage The message to send.
      */
     private void updateUserListEntries(UserListItemMessage updateMessage) {
-        server.getRawOnlinePlayers().stream().filter(player -> player.canSee(this)).forEach(player -> player.getSession().send(updateMessage));
+		for(GlowPlayer player : server.getRawOnlinePlayers()) {
+			if(!player.canSee(this)) continue;
+			player.getSession().send(updateMessage);
+		}
     }
 
     @Override
@@ -1597,7 +1614,11 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
 
         getSession().send(new UseBedMessage(SELF_ID, head.getX(), head.getY(), head.getZ()));
         UseBedMessage msg = new UseBedMessage(getEntityId(), head.getX(), head.getY(), head.getZ());
-        world.getRawPlayers().stream().filter(p -> p != this && p.canSeeEntity(this)).forEach(p -> p.getSession().send(msg));
+		for(GlowPlayer p : world.getRawPlayers()) {
+			if(p == this) continue;
+			if(!p.canSeeEntity(this)) continue;
+			p.getSession().send(msg);
+		}
     }
 
     /**
@@ -1636,7 +1657,11 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
 
         getSession().send(new AnimateEntityMessage(SELF_ID, AnimateEntityMessage.LEAVE_BED));
         AnimateEntityMessage msg = new AnimateEntityMessage(getEntityId(), AnimateEntityMessage.LEAVE_BED);
-        world.getRawPlayers().stream().filter(p -> p != this && p.canSeeEntity(this)).forEach(p -> p.getSession().send(msg));
+		for(GlowPlayer p : world.getRawPlayers()) {
+			if(p == this) continue;
+			if(!p.canSeeEntity(this)) continue;
+			p.getSession().send(msg);
+		}
     }
 
     @Override
@@ -1787,20 +1812,22 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
      * @param text  message sent by the player.
      * @param async whether the message was received asynchronously.
      */
-    public void chat(String text, boolean async) {
+    public void chat(final String text, boolean async) {
         if (text.charAt(0) == '/') {
-            Runnable task = () -> {
-                server.getLogger().info(getName() + " issued command: " + text);
-                try {
-                    PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(this, text);
-                    if (!EventFactory.callEvent(event).isCancelled()) {
-                        server.dispatchCommand(this, event.getMessage().substring(1));
-                    }
-                } catch (Exception ex) {
-                    sendMessage(ChatColor.RED + "An internal error occurred while executing your command.");
-                    server.getLogger().log(Level.SEVERE, "Exception while executing command: " + text, ex);
-                }
-            };
+            Runnable task = new Runnable() {
+					public void run() {
+						server.getLogger().info(getName() + " issued command: " + text);
+						try {
+							PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(GlowPlayer.this, text);
+							if (!EventFactory.callEvent(event).isCancelled()) {
+								server.dispatchCommand(GlowPlayer.this, event.getMessage().substring(1));
+							}
+						} catch (Exception ex) {
+							sendMessage(ChatColor.RED + "An internal error occurred while executing your command.");
+							server.getLogger().log(Level.SEVERE, "Exception while executing command: " + text, ex);
+						}
+					}
+				};
 
             // if async is true, this task should happen synchronously
             // otherwise, we're sync already, it can happen here
@@ -1830,10 +1857,12 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
 
     public void saveData(boolean async) {
         if (async) {
-            Bukkit.getScheduler().runTaskAsynchronously(null, () -> {
-                server.getPlayerDataService().writeData(GlowPlayer.this);
-                server.getPlayerStatisticIoService().writeStats(GlowPlayer.this);
-            });
+            Bukkit.getScheduler().runTaskAsynchronously(null, new Runnable() {
+					public void run() {
+						server.getPlayerDataService().writeData(GlowPlayer.this);
+						server.getPlayerStatisticIoService().writeStats(GlowPlayer.this);
+					}
+				});
         } else {
             server.getPlayerDataService().writeData(this);
             server.getPlayerStatisticIoService().writeStats(this);
@@ -2129,6 +2158,7 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+/*
     @Override
     public void sendMessage(BaseComponent component) {
         sendMessage(ChatMessageType.CHAT, component);
@@ -2143,6 +2173,7 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
     public void sendMessage(ChatMessageType chatMessageType, BaseComponent... baseComponents) {
         session.send(new ChatMessage(TextMessage.decode(ComponentSerializer.toString(baseComponents)), chatMessageType.ordinal()));
     }
+*/
 
     @Override
     public void setPlayerListHeaderFooter(BaseComponent[] header, BaseComponent[] footer) {
@@ -2837,9 +2868,11 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
 
     private void broadcastBlockBreakAnimation(GlowBlock block, int destroyStage) {
         GlowChunk.Key key = new GlowChunk.Key(block.getChunk().getX(), block.getChunk().getZ());
-        block.getWorld().getRawPlayers().stream()
-                .filter(player -> player.canSeeChunk(key) && player != this)
-                .forEach(player -> player.sendBlockBreakAnimation(block.getLocation(), destroyStage));
+		for(GlowPlayer player : block.getWorld().getRawPlayers()) {
+			if(player == this) continue;
+			if(!player.canSeeChunk(key)) continue;
+			player.sendBlockBreakAnimation(block.getLocation(), destroyStage);
+		}
     }
 
     public void setDigging(GlowBlock block) {

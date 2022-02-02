@@ -31,12 +31,16 @@ public class BlockFalling extends BlockType {
     }
 
     @Override
-    public void updatePhysics(GlowBlock me) {
+    public void updatePhysics(final GlowBlock me) {
         Block below = me.getRelative(BlockFace.DOWN);
         if (!supportingBlock(below.getType())) {
             //Simulates real Minecraft delay on block fall
             //If possible should be changed to 2.5 ticks
-            me.getWorld().getServer().getScheduler().runTaskLater(null, () -> transformToFallingEntity(me), 2);
+            me.getWorld().getServer().getScheduler().runTaskLater(null, new Runnable() {
+					public void run() {
+						transformToFallingEntity(me);
+					}
+				}, 2);
         }
     }
 

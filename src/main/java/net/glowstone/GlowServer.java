@@ -13,7 +13,6 @@ import net.glowstone.block.MaterialValueManager;
 import net.glowstone.block.state.GlowDispenser;
 import net.glowstone.boss.BossBarManager;
 import net.glowstone.boss.GlowBossBar;
-import net.glowstone.client.GlowClient;
 import net.glowstone.command.*;
 import net.glowstone.constants.GlowEnchantment;
 import net.glowstone.constants.GlowPotionEffect;
@@ -88,8 +87,6 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -299,11 +296,6 @@ public final class GlowServer implements Server {
     }
 
     /**
-     * The client instance backed by this server.
-     */
-    public static GlowClient client;
-
-    /**
      * Creates a new server on TCP port 25565 and starts listening for
      * connections.
      *
@@ -455,11 +447,6 @@ public final class GlowServer implements Server {
 
         if (doMetrics()) {
             new Metrics(this, config.getString(Key.METRICS_UUID), false);
-        }
-
-        if (config.getBoolean(Key.RUN_CLIENT)) {
-            client = new GlowClient(this);
-            client.run();
         }
     }
 
@@ -634,8 +621,8 @@ public final class GlowServer implements Server {
 
     private void checkTransfer(String name, String suffix, Environment environment) {
         // todo: import things like per-dimension villages.dat when those are implemented
-        Path srcPath = new File(new File(getWorldContainer(), name), "DIM" + environment.getId()).toPath();
-        Path destPath = new File(getWorldContainer(), name + suffix).toPath();
+        final Path srcPath = new File(new File(getWorldContainer(), name), "DIM" + environment.getId()).toPath();
+        final Path destPath = new File(getWorldContainer(), name + suffix).toPath();
         if (Files.exists(srcPath) && !Files.exists(destPath)) {
             logger.info("Importing " + destPath + " from " + srcPath);
             try {
@@ -822,19 +809,19 @@ public final class GlowServer implements Server {
         commandMap.register("glowstone", new WorldBorderCommand());
         commandMap.register("glowstone", new GlowstoneCommand());
 
-        File folder = new File(config.getString(Key.PLUGIN_FOLDER));
-        if (!folder.isDirectory() && !folder.mkdirs()) {
-            logger.log(Level.SEVERE, "Could not create plugins directory: " + folder);
+        File dir = new File(config.getString(Key.PLUGIN_FOLDER));
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            logger.log(Level.SEVERE, "Could not create plugins directory: " + dir.toString());
         }
 
         // detect plugin types
-        pluginTypeDetector = new GlowPluginTypeDetector(folder);
+        pluginTypeDetector = new GlowPluginTypeDetector(dir);
         pluginTypeDetector.scan();
 
         // clear plugins and prepare to load (Bukkit)
         pluginManager.clearPlugins();
         pluginManager.registerInterface(JavaPluginLoader.class);
-        Plugin[] plugins = pluginManager.loadPlugins(pluginTypeDetector.bukkitPlugins.toArray(new File[pluginTypeDetector.bukkitPlugins.size()]), folder.getPath());
+        Plugin[] plugins = pluginManager.loadPlugins(pluginTypeDetector.bukkitPlugins.toArray(new File[pluginTypeDetector.bukkitPlugins.size()]));
 
         // call onLoad methods
         for (Plugin plugin : plugins) {
@@ -940,7 +927,9 @@ public final class GlowServer implements Server {
 
             Map<String, Map<String, Object>> data = new HashMap<>();
 
-            permConfig.getValues(false).forEach((key, value) -> data.put(key, ((MemorySection) value).getValues(false)));
+			for(Map.Entry<String, Object> entry : permConfig.getValues(false).entrySet()) {
+				data.put(entry.getKey(), ((MemorySection)entry.getValue()).getValues(false));
+			}
 
             List<Permission> perms = Permission.loadPermissions(data, "Permission node '%s' in permissions config is invalid", PermissionDefault.OP);
 
@@ -1276,6 +1265,27 @@ public final class GlowServer implements Server {
         public org.bukkit.configuration.file.YamlConfiguration getConfig() {
             return config.getConfig();
         }
+
+		@Override
+		public void broadcast(BaseComponent component) {
+			try {
+				// todo: uses gson instead json-simple
+				Message packet = new ChatMessage((JSONObject)parser.parse(ComponentSerializer.toString(component)));
+				broadcastPacket(packet);
+			} catch (ParseException e) {
+				e.printStackTrace(); //should never happen
+			}
+		}
+
+		@Override
+		public void broadcast(BaseComponent... components) {
+			try {
+				Message packet = new ChatMessage((JSONObject)parser.parse(ComponentSerializer.toString(components)));
+				broadcastPacket(packet);
+			} catch (ParseException e) {
+				e.printStackTrace(); //should never happen
+			}
+		}
     };
 
     @Override
@@ -1374,7 +1384,10 @@ public final class GlowServer implements Server {
 
     @Override
     public Set<OfflinePlayer> getOperators() {
-        return opsList.getUUIDs().stream().map(this::getOfflinePlayer).collect(Collectors.toSet());
+		List<UUID> uuids = opsList.getUUIDs();
+		HashSet<OfflinePlayer> ops = new HashSet<>(uuids.size());
+		for(UUID uuid : uuids) ops.add(getOfflinePlayer(uuid));
+		return ops;
     }
 
     @Override
@@ -1406,10 +1419,12 @@ public final class GlowServer implements Server {
         }
 
         // add all offline players that aren't already online
-        getPlayerDataService().getOfflinePlayers().stream().filter(offline -> !uuids.contains(offline.getUniqueId())).forEach(offline -> {
-            result.add(offline);
-            uuids.add(offline.getUniqueId());
-        });
+		for(OfflinePlayer player : getPlayerDataService().getOfflinePlayers()) {
+			UUID uuid = player.getUniqueId();
+			if(uuids.contains(uuid)) continue;
+			result.add(player);
+			uuids.add(uuid);
+		}
 
         return result.toArray(new OfflinePlayer[result.size()]);
     }
@@ -1507,33 +1522,14 @@ public final class GlowServer implements Server {
 
     @Override
     public void savePlayers() {
-        getOnlinePlayers().forEach(Player::saveData);
+		for(Player player : getOnlinePlayers()) {
+			player.saveData();
+		}
     }
 
     @Override
     public int broadcastMessage(String message) {
         return broadcast(message, BROADCAST_CHANNEL_USERS);
-    }
-
-    @Override
-    public void broadcast(BaseComponent component) {
-        try {
-            // todo: uses gson instead json-simple
-            Message packet = new ChatMessage((JSONObject) parser.parse(ComponentSerializer.toString(component)));
-            broadcastPacket(packet);
-        } catch (ParseException e) {
-            e.printStackTrace(); //should never happen
-        }
-    }
-
-    @Override
-    public void broadcast(BaseComponent... components) {
-        try {
-            Message packet = new ChatMessage((JSONObject) parser.parse(ComponentSerializer.toString(components)));
-            broadcastPacket(packet);
-        } catch (ParseException e) {
-            e.printStackTrace(); //should never happen
-        }
     }
 
     public void broadcastPacket(Message message) {
@@ -1556,7 +1552,12 @@ public final class GlowServer implements Server {
 
     @Override
     public Set<OfflinePlayer> getWhitelistedPlayers() {
-        return whitelist.getProfiles().stream().map(this::getOfflinePlayer).collect(Collectors.toSet());
+		List<PlayerProfile> profiles = whitelist.getProfiles();
+		HashSet<OfflinePlayer> players = new HashSet<>(profiles.size());
+		for(PlayerProfile profile : profiles) {
+			players.add(getOfflinePlayer(profile));
+		}
+		return players;
     }
 
     @Override
@@ -1566,7 +1567,10 @@ public final class GlowServer implements Server {
 
     @Override
     public Set<String> getIPBans() {
-        return ipBans.getBanEntries().stream().map(BanEntry::getTarget).collect(Collectors.toSet());
+		Set<BanEntry> bans = ipBans.getBanEntries();
+		HashSet<String> banned_addresses = new HashSet<>(bans.size());
+		for(BanEntry entry : bans) banned_addresses.add(entry.getTarget());
+		return banned_addresses;
     }
 
     @Override
@@ -1584,7 +1588,10 @@ public final class GlowServer implements Server {
 
     @Override
     public Set<OfflinePlayer> getBannedPlayers() {
-        return nameBans.getBanEntries().stream().map(entry -> getOfflinePlayer(entry.getTarget())).collect(Collectors.toSet());
+		Set<BanEntry> bans = nameBans.getBanEntries();
+		HashSet<OfflinePlayer> players = new HashSet<OfflinePlayer>(bans.size());
+		for(BanEntry entry : bans) players.add(getOfflinePlayer(entry.getTarget()));
+		return players;
     }
 
     @Override

@@ -12,8 +12,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.resolver.dns.DnsAddressResolverGroup;
-import io.netty.resolver.dns.DnsServerAddresses;
+//import io.netty.resolver.dns.DnsAddressResolverGroup;
+//import io.netty.resolver.dns.DnsServerAddresses;
 import lombok.AllArgsConstructor;
 
 import javax.net.ssl.SSLException;
@@ -23,14 +23,14 @@ import java.util.concurrent.TimeUnit;
 
 public class HttpClient {
 
-    private static DnsAddressResolverGroup resolverGroup = new DnsAddressResolverGroup(Epoll.isAvailable() ? EpollDatagramChannel.class : NioDatagramChannel.class, DnsServerAddresses.defaultAddresses());
+    //private static DnsAddressResolverGroup resolverGroup = new DnsAddressResolverGroup(Epoll.isAvailable() ? EpollDatagramChannel.class : NioDatagramChannel.class, DnsServerAddresses.defaultAddresses());
 
-    public static void connect(String url, EventLoop eventLoop, HttpCallback callback) {
+    public static void connect(final String url, EventLoop eventLoop, final HttpCallback callback) {
 
-        URI uri = URI.create(url);
+        final URI uri = URI.create(url);
 
         String scheme = uri.getScheme() == null ? "http" : uri.getScheme();
-        String host = uri.getHost() == null ? "127.0.0.1" : uri.getHost();
+        final String host = uri.getHost() == null ? "127.0.0.1" : uri.getHost();
         int port = uri.getPort();
 
         SslContext sslCtx = null;
@@ -50,20 +50,22 @@ public class HttpClient {
 
         new Bootstrap()
                 .group(eventLoop)
-                .resolver(resolverGroup)
+                //.resolver(resolverGroup)
                 .channel(Epoll.isAvailable() ? EpollSocketChannel.class : NioSocketChannel.class)
                 .handler(new HttpChannelInitializer(sslCtx, callback))
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .connect(InetSocketAddress.createUnresolved(host, port))
-                .addListener((ChannelFutureListener) future -> {
-                    if (future.isSuccess()) {
-                        String path = uri.getRawPath() + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery());
-                        HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
-                        request.headers().set(HttpHeaderNames.HOST, host);
-                        future.channel().writeAndFlush(request);
-                    } else {
-                        callback.error(future.cause());
-                    }
+                .addListener(new ChannelFutureListener() {
+					public void operationComplete(ChannelFuture future) {
+						if (future.isSuccess()) {
+							String path = uri.getRawPath() + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery());
+							HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path);
+							request.headers().set(HttpHeaderNames.HOST, host);
+							future.channel().writeAndFlush(request);
+						} else {
+							callback.error(future.cause());
+						}
+					}
                 });
     }
 

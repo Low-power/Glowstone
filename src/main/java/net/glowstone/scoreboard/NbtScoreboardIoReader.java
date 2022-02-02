@@ -136,7 +136,7 @@ public class NbtScoreboardIoReader {
             team.setColor(teamColor);
         }
 
-        players.forEach(team::addEntry);
+		for(String p : players) team.addEntry(p);
     }
 
     private static String getOrNull(String key, CompoundTag tag) {

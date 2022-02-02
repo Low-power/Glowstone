@@ -29,7 +29,8 @@ public final class StatisticMap {
     // Helpers
 
     private int getValue(String key) {
-        return values.getOrDefault(key, 0);
+		Integer value = values.get(key);
+		return value == null ? 0 : value.intValue();
     }
 
     private void setValue(String key, int value) {

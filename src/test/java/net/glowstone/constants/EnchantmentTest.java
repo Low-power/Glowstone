@@ -51,7 +51,7 @@ public class EnchantmentTest {
     @Test
     public void effect() throws ReflectiveOperationException {
         EnchantmentWrapper wrapper = (EnchantmentWrapper) field.get(null);
-        GlowEnchantment enchant = (GlowEnchantment) wrapper.getEnchantment();
+        Enchantment enchant = wrapper.getEnchantment();
         assertThat("missing enchantment for " + field.getName(), enchant, notNullValue());
         assertThat("wrong name on wrapped effect", enchant.getName(), is(field.getName()));
         assertThat("missing from byName", Enchantment.getByName(enchant.getName()), is(enchant));

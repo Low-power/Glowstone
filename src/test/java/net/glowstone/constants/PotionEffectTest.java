@@ -3,6 +3,7 @@ package net.glowstone.constants;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionEffectTypeWrapper;
 import org.hamcrest.number.OrderingComparison;
+import org.hamcrest.Matcher;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +53,7 @@ public class PotionEffectTest {
     @Test
     public void effect() throws ReflectiveOperationException {
         PotionEffectTypeWrapper wrapper = (PotionEffectTypeWrapper) field.get(null);
-        GlowPotionEffect effect = (GlowPotionEffect) wrapper.getType();
+        PotionEffectType effect = wrapper.getType();
         assertThat("missing potion effect for " + field.getName(), effect, notNullValue());
         assertThat("wrong name on wrapped effect", effect.getName(), is(field.getName()));
         assertThat("missing from byName", PotionEffectType.getByName(effect.getName()), is(effect));

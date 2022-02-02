@@ -130,13 +130,14 @@ public class ReflectionProcessor {
                 if (!method.getName().equals(name)) {
                     continue;
                 }
-                if (method.getParameterCount() != parameters.length) {
+				Class<?>[] arg_types = method.getParameterTypes();
+                if(arg_types.length != parameters.length) {
                     continue;
                 }
                 boolean matches = true;
                 a:
-                for (Class<?> param : method.getParameterTypes()) {
-                    for (Class p : parameters) {
+                for (Class<?> param : arg_types) {
+                    for (Class<?> p : parameters) {
                         if (!p.equals(param)) {
                             matches = false;
                             break a;
@@ -148,7 +149,7 @@ public class ReflectionProcessor {
                 }
                 matches = true;
                 b:
-                for (Class<?> param : method.getParameterTypes()) {
+                for (Class<?> param : arg_types) {
                     for (Class p : parameters) {
                         if (!param.isAssignableFrom(p)) {
                             matches = false;

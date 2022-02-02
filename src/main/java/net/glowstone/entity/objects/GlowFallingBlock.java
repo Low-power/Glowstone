@@ -14,9 +14,9 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
-
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Random;
 
 public class GlowFallingBlock extends GlowEntity implements FallingBlock {
@@ -132,9 +132,9 @@ public class GlowFallingBlock extends GlowEntity implements FallingBlock {
         // if block data doesn't appear to work check this value.
         int blockIdData = getBlockId() | getBlockData() << 12;
 
-        return Arrays.asList(
-                new SpawnObjectMessage(id, getUniqueId(), 70, x, y, z, pitch, yaw, blockIdData)
-        );
+		ArrayList<Message> list = new ArrayList<>();
+		list.add(new SpawnObjectMessage(id, getUniqueId(), 70, x, y, z, pitch, yaw, blockIdData));
+		return list;
     }
 
     @Override

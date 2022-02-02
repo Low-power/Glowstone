@@ -49,7 +49,7 @@ public class OpenCL {
                 return clKernel;
             }
         } else {
-            kernels.put(program, new HashMap<>());
+            kernels.put(program, new HashMap<String, CLKernel>());
             CLKernel clKernel = program.createCLKernel(name);
             kernels.get(program).put(name, clKernel);
             return clKernel;

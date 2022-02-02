@@ -62,7 +62,7 @@ public class GlowInventory implements Inventory {
     }
 
     public GlowInventory(InventoryHolder owner, InventoryType type, int size, String title) {
-        initialize(GlowInventorySlot.createList(size), new HashSet<>(), owner, type, title);
+        initialize(GlowInventorySlot.createList(size), new HashSet<HumanEntity>(), owner, type, title);
     }
 
     /**
@@ -633,19 +633,19 @@ public class GlowInventory implements Inventory {
     @Override
     public void remove(int materialId) {
         HashMap<Integer, ? extends ItemStack> stacks = all(materialId);
-        stacks.keySet().forEach(this::clear);
+		for(Integer id : stacks.keySet()) clear(id.intValue());
     }
 
     @Override
     public void remove(Material material) {
         HashMap<Integer, ? extends ItemStack> stacks = all(material);
-        stacks.keySet().forEach(this::clear);
+		for(Integer id : stacks.keySet()) clear(id.intValue());
     }
 
     @Override
     public void remove(ItemStack item) {
         HashMap<Integer, ? extends ItemStack> stacks = all(item);
-        stacks.keySet().forEach(this::clear);
+		for(Integer id : stacks.keySet()) clear(id.intValue());
     }
 
     ////////////////////////////////////////////////////////////////////////////

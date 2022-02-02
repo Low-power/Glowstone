@@ -7,10 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.meta.ItemMeta;
-
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link ItemMeta}, created through {@link GlowItemFactory}.
@@ -48,7 +45,7 @@ class GlowMetaItem implements ItemMeta {
     protected static void serializeEnchants(String name, Map<String, Object> map, Map<Enchantment, Integer> enchants) {
         Map<String, Object> enchantList = new HashMap<>();
 
-        for (Entry<Enchantment, Integer> enchantment : enchants.entrySet()) {
+        for (Map.Entry<Enchantment, Integer> enchantment : enchants.entrySet()) {
             enchantList.put(enchantment.getKey().getName(), enchantment.getValue());
         }
 
@@ -58,7 +55,7 @@ class GlowMetaItem implements ItemMeta {
     protected static void writeNbtEnchants(String name, CompoundTag to, Map<Enchantment, Integer> enchants) {
         List<CompoundTag> ench = new ArrayList<>();
 
-        for (Entry<Enchantment, Integer> enchantment : enchants.entrySet()) {
+        for (Map.Entry<Enchantment, Integer> enchantment : enchants.entrySet()) {
             CompoundTag enchantmentTag = new CompoundTag();
             enchantmentTag.putShort("id", enchantment.getKey().getId());
             enchantmentTag.putShort("lvl", enchantment.getValue());
@@ -123,10 +120,12 @@ class GlowMetaItem implements ItemMeta {
         }
 
         if (hideFlag != 0) {
-            Set<String> hideFlags = getItemFlags().stream().map(Enum::name).collect(Collectors.toSet());
-            if (hideFlags.isEmpty()) {
+			Set<ItemFlag> item_flags = getItemFlags();
+            Set<String> hideFlags = new HashSet<>(item_flags.size());
+			for(ItemFlag flag : item_flags) hideFlags.add(flag.name());
+            //if (hideFlags.isEmpty()) {
                 result.put("ItemFlags", hideFlags);
-            }
+            //}
         }
 
         return result;
@@ -155,6 +154,7 @@ class GlowMetaItem implements ItemMeta {
         tag.putBool("Unbreakable", isUnbreakable());
     }
 
+	@SuppressWarnings("unchecked")
     void readNbt(CompoundTag tag) {
         if (tag.isCompound("display")) {
             CompoundTag display = tag.getCompound("display");
@@ -162,7 +162,7 @@ class GlowMetaItem implements ItemMeta {
                 setDisplayName(display.getString("Name"));
             }
             if (display.isList("Lore", TagType.STRING)) {
-                setLore(display.getList("Lore", TagType.STRING));
+                setLore((List)display.getList("Lore", TagType.STRING));
             }
         }
 
@@ -269,8 +269,9 @@ class GlowMetaItem implements ItemMeta {
     }
 
     @Override
+	@SuppressWarnings("unchecked")
     public Map<Enchantment, Integer> getEnchants() {
-        return hasEnchants() ? Collections.unmodifiableMap(enchants) : Collections.emptyMap();
+        return hasEnchants() ? Collections.unmodifiableMap(enchants) : (Map)Collections.emptyMap();
     }
 
     @Override

@@ -11,11 +11,7 @@ import net.glowstone.net.message.play.scoreboard.ScoreboardTeamMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.scoreboard.*;
-
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -61,7 +57,7 @@ public final class GlowScoreboard implements Scoreboard {
             player.getSession().send(new ScoreboardDisplayMessage(GlowDisplaySlot.getId(slot), name));
         }
         // scores
-        for (Entry<String, Set<GlowScore>> entry : scoreMap.entrySet()) {
+        for (Map.Entry<String, Set<GlowScore>> entry : scoreMap.entrySet()) {
             for (GlowScore score : entry.getValue()) {
                 player.getSession().send(new ScoreboardScoreMessage(entry.getKey(), score.getObjective().getName(), score.getScore()));
             }
@@ -157,7 +153,7 @@ public final class GlowScoreboard implements Scoreboard {
      * @param team The team to unregister.
      */
     void removeTeam(GlowTeam team) {
-        team.getEntries().forEach(entryTeams::remove);
+		for(String name : team.getEntries()) entryTeams.remove(name);
         teams.remove(team.getName());
         broadcast(ScoreboardTeamMessage.remove(team.getName()));
     }
@@ -169,7 +165,11 @@ public final class GlowScoreboard implements Scoreboard {
      * @return The set of objectives.
      */
     Set<GlowObjective> getForCriteria(String criteria) {
-        Set<GlowObjective> result = criteriaMap.computeIfAbsent(criteria, k -> new HashSet<>());
+        Set<GlowObjective> result = criteriaMap.get(criteria);
+		if(result == null) {
+			result = new HashSet<>();
+			criteriaMap.put(criteria, result);
+		}
         return result;
     }
 
@@ -180,7 +180,11 @@ public final class GlowScoreboard implements Scoreboard {
      * @return The set of scores.
      */
     Set<GlowScore> getScoresForName(String entry) {
-        Set<GlowScore> result = scoreMap.computeIfAbsent(entry, k -> new HashSet<>());
+        Set<GlowScore> result = scoreMap.get(entry);
+		if(result == null) {
+			result = new HashSet<>();
+			scoreMap.put(entry, result);
+		}
         return result;
     }
 
@@ -222,12 +226,15 @@ public final class GlowScoreboard implements Scoreboard {
         return objectives.get(name);
     }
 
+	// javac(1) says 'inconvertible types', converting to raw type instead
+	@SuppressWarnings("unchecked")
     public Set<Objective> getObjectivesByCriteria(String criteria) throws IllegalArgumentException {
-        return ImmutableSet.copyOf(getForCriteria(criteria));
+        return ImmutableSet.copyOf((Set)getForCriteria(criteria));
     }
 
+	@SuppressWarnings("unchecked")
     public Set<Objective> getObjectives() {
-        return ImmutableSet.copyOf(objectives.values());
+        return ImmutableSet.copyOf((Collection)objectives.values());
     }
 
     public Objective getObjective(DisplaySlot slot) throws IllegalArgumentException {
@@ -269,8 +276,9 @@ public final class GlowScoreboard implements Scoreboard {
         return teams.get(teamName);
     }
 
+	@SuppressWarnings("unchecked")
     public Set<Team> getTeams() {
-        return ImmutableSet.copyOf(teams.values());
+        return ImmutableSet.copyOf((Collection)teams.values());
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -280,6 +288,7 @@ public final class GlowScoreboard implements Scoreboard {
         return ImmutableSet.copyOf(scoreMap.keySet());
     }
 
+	@SuppressWarnings("unchecked")
     public Set<Score> getScores(String entry) throws IllegalArgumentException {
         checkNotNull(entry, "Entry cannot be null");
 
@@ -287,7 +296,7 @@ public final class GlowScoreboard implements Scoreboard {
         if (scoreSet == null) {
             return ImmutableSet.of();
         } else {
-            return ImmutableSet.copyOf(scoreSet);
+            return ImmutableSet.copyOf((Set)scoreSet);
         }
     }
 
@@ -306,7 +315,10 @@ public final class GlowScoreboard implements Scoreboard {
 
     @Deprecated
     public Set<OfflinePlayer> getPlayers() {
-        Set<OfflinePlayer> result = getEntries().stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
+        Set<OfflinePlayer> result = new HashSet<>();
+		for(String name : getEntries()) {
+			result.add(Bukkit.getOfflinePlayer(name));
+		}
         return Collections.unmodifiableSet(result);
     }
 

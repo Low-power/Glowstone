@@ -5,7 +5,6 @@ import net.glowstone.GlowServer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -42,6 +41,7 @@ public class ProfileCache {
         if (uuidCache.containsKey(playerName)) {
             return uuidCache.get(playerName);
         }
+/*
         UUID uuid = null;
         CompletableFuture<UUID> uuidFuture = CompletableFuture.supplyAsync(() -> PlayerDataFetcher.getUUID(playerName));
         uuidFuture.thenAcceptAsync(uid -> uuidCache.put(playerName, uid));
@@ -53,5 +53,8 @@ public class ProfileCache {
             GlowServer.logger.log(Level.SEVERE, "UUID Cache lookup timed out: ", e);
         }
         return uuid;
+*/
+		//return PlayerDataFetcher.getUUID(playerName);
+		return null;
     }
 }

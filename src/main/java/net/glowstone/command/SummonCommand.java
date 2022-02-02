@@ -2,6 +2,7 @@ package net.glowstone.command;
 
 import com.google.common.collect.ImmutableList;
 import net.glowstone.GlowWorld;
+import net.glowstone.entity.CustomEntityDescriptor;
 import net.glowstone.entity.EntityRegistry;
 import net.glowstone.entity.GlowEntity;
 import net.glowstone.io.entity.EntityStorage;
@@ -64,9 +65,10 @@ public class SummonCommand extends BukkitCommand {
 
         CompoundTag tag = null;
         if (args.length >= 5) {
-            String data = String.join(" ", new ArrayList<>(Arrays.asList(args)).subList(4, args.length));
+			StringBuilder data = new StringBuilder(args[4]);
+			for(int i = 5; i < args.length; i++) data.append(" ").append(args[i]);
             try {
-                tag = Mojangson.parseCompound(data);
+                tag = Mojangson.parseCompound(data.toString());
             } catch (MojangsonParseException e) {
                 sender.sendMessage(ChatColor.RED + "Invalid Data Tag: " + e.getMessage());
             }
@@ -126,10 +128,10 @@ public class SummonCommand extends BukkitCommand {
                     completion.add(type.getName());
                 }
             }
-            EntityRegistry.getRegisteredCustomEntities().forEach((d) -> {
-                if (StringUtils.startsWithIgnoreCase(d.getId(), arg))
-                    completion.add(d.getId().toLowerCase());
-            });
+			for(CustomEntityDescriptor d : EntityRegistry.getRegisteredCustomEntities()) {
+				if(!StringUtils.startsWithIgnoreCase(d.getId(), arg)) continue;
+				completion.add(d.getId().toLowerCase());
+			}
             return completion;
         } else {
             return ImmutableList.of();

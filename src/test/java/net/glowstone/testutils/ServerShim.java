@@ -155,16 +155,6 @@ public class ServerShim implements Server {
     }
 
     @Override
-    public void broadcast(BaseComponent baseComponent) {
-
-    }
-
-    @Override
-    public void broadcast(BaseComponent... baseComponents) {
-
-    }
-
-    @Override
     public String getUpdateFolder() {
         return null;
     }

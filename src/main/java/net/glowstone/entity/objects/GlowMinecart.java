@@ -40,7 +40,7 @@ public abstract class GlowMinecart extends GlowEntity implements Minecart {
         int yaw = Position.getIntYaw(location);
         int pitch = Position.getIntPitch(location);
 
-        return Collections.singletonList(new SpawnObjectMessage(id, getUniqueId(), 10, x, y, z, pitch, yaw, type.ordinal()));
+        return Collections.singletonList((Message)new SpawnObjectMessage(id, getUniqueId(), 10, x, y, z, pitch, yaw, type.ordinal()));
     }
 
     @Override

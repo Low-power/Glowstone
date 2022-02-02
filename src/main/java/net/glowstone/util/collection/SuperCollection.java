@@ -21,7 +21,7 @@ public abstract class SuperCollection<E> implements Collection<E> {
     private AdditionMode additionMode;
 
     public SuperCollection(AdditionMode additionMode) {
-        this(new ArrayList<>(), additionMode);
+        this(new ArrayList<Collection<E>>(), additionMode);
     }
 
     public SuperCollection(List<? extends Collection<E>> parents, AdditionMode additionMode) {
@@ -149,7 +149,7 @@ public abstract class SuperCollection<E> implements Collection<E> {
 
     @Override
     public void clear() {
-        parents.forEach(Collection::clear);
+		for(Collection<E> parent : parents) parent.clear();
     }
 
     @Override
