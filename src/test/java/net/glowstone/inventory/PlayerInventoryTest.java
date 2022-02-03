@@ -1,6 +1,7 @@
 package net.glowstone.inventory;
 
 import net.glowstone.util.IsFloatCloseTo;
+import net.glowstone.testutils.ServerShim;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.InventoryType.SlotType;
@@ -30,6 +31,7 @@ public class PlayerInventoryTest {
 
     @Before
     public void setup() {
+		ServerShim.install();
         inventory = new GlowPlayerInventory(null);
     }
 
