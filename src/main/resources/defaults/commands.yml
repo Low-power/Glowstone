@@ -7,7 +7,10 @@
 #
 # For help, join us on IRC: #glowstone @ esper.net
 
-aliases:
-  icanhasbukkit:
-  - version $1-
-  - plugins
+{
+ "aliases":{
+  "icanhasbukkit":[
+   "version $1-", "plugins"
+  ]
+ }
+}
