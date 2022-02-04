@@ -63,11 +63,10 @@ public final class ServerConfig {
         this.configFile = configFile;
         this.parameters = parameters;
 
-        config.options().indent(4).copyHeader(true).header(
-                "glowstone.yml is the main configuration file for a Glowstone server\n" +
-                        "It contains everything from server.properties and bukkit.yml in a\n" +
-                        "normal CraftBukkit installation.\n\n" +
-                        "For help, join us on Discord: https://discord.gg/TFJqhsC");
+		config.options().copyHeader(true).header(
+			"The main configuration file for a Glowstone server. It contains everything\n" +
+			"from server.properties and bukkit.yml in a normal CraftBukkit installation.\n"
+		);
     }
 
     ////////////////////////////////////////////////////////////////////////////
