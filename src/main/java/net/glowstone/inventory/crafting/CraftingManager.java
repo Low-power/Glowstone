@@ -5,13 +5,11 @@ import net.glowstone.GlowServer;
 import net.glowstone.inventory.GlowCraftingInventory;
 import net.glowstone.util.InventoryUtil;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.*;
-
+import org.json.simple.JSONValue;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Manager for crafting and smelting recipes
@@ -372,28 +370,32 @@ public final class CraftingManager implements Iterable<Recipe> {
     }
 
     /**
-     * Load default recipes from built-in recipes.yml file.
+     * Load default recipes from built-in recipes.json file.
      */
     @SuppressWarnings("unchecked")
     private void loadRecipes() {
-        // Load recipes from recipes.yml file
-        InputStream in = getClass().getClassLoader().getResourceAsStream("builtin/recipes.yml");
+        InputStream in = getClass().getClassLoader().getResourceAsStream("builtin/recipes.json");
         if (in == null) {
             GlowServer.logger.warning("Could not find default recipes on classpath");
             return;
         }
 
-        ConfigurationSection config = YamlConfiguration.loadConfiguration(in);
+		InputStreamReader reader = new InputStreamReader(in);
+		Object obj = JSONValue.parse(reader);
+		if(!(obj instanceof Map)) {
+			GlowServer.logger.warning("default recipes data isn't properly formatted");
+			return;
+		}
 
         // shaped
-        for (Map<?, ?> data : config.getMapList("shaped")) {
+        for (Map<?, ?> data : ((Map<String, List<Map<?, ?>>>)obj).get("shaped")) {
             ItemStack resultStack = ItemStack.deserialize((Map<String, Object>) data.get("result"));
             ShapedRecipe recipe = new ShapedRecipe(resultStack);
             List<String> shape = (List<String>) data.get("shape");
             recipe.shape(shape.toArray(new String[shape.size()]));
 
             Map<String, Map<String, Object>> ingredients = (Map<String, Map<String, Object>>) data.get("ingredients");
-            for (Entry<String, Map<String, Object>> entry : ingredients.entrySet()) {
+            for (Map.Entry<String, Map<String, Object>> entry : ingredients.entrySet()) {
                 ItemStack stack = ItemStack.deserialize(entry.getValue());
                 recipe.setIngredient(entry.getKey().charAt(0), stack.getData());
             }
@@ -402,7 +404,7 @@ public final class CraftingManager implements Iterable<Recipe> {
         }
 
         // shapeless
-        for (Map<?, ?> data : config.getMapList("shapeless")) {
+        for (Map<?, ?> data : ((Map<String, List<Map<?, ?>>>)obj).get("shapeless")) {
             ItemStack resultStack = ItemStack.deserialize((Map<String, Object>) data.get("result"));
             ShapelessRecipe recipe = new ShapelessRecipe(resultStack);
 
@@ -415,7 +417,7 @@ public final class CraftingManager implements Iterable<Recipe> {
         }
 
         // furnace
-        for (Map<?, ?> data : config.getMapList("furnace")) {
+        for (Map<?, ?> data : ((Map<String, List<Map<?, ?>>>)obj).get("furnace")) {
             ItemStack inputStack = ItemStack.deserialize((Map<String, Object>) data.get("input"));
             ItemStack resultStack = ItemStack.deserialize((Map<String, Object>) data.get("result"));
             float xp = ((Number) data.get("xp")).floatValue();

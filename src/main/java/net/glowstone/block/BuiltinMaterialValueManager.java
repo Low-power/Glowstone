@@ -1,13 +1,10 @@
 package net.glowstone.block;
 
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
-
+import org.json.simple.JSONValue;
 import java.io.InputStreamReader;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Set;
 
 public class BuiltinMaterialValueManager implements MaterialValueManager {
     private final Map<Material, BuiltinValueCollection> values;
@@ -16,24 +13,23 @@ public class BuiltinMaterialValueManager implements MaterialValueManager {
     public BuiltinMaterialValueManager() {
         values = new EnumMap<>(Material.class);
 
-        YamlConfiguration builtinValues = YamlConfiguration.loadConfiguration(
-                new InputStreamReader(getClass().getClassLoader().getResourceAsStream("builtin/materialValues.yml")));
+		InputStreamReader reader = new InputStreamReader(getClass().getClassLoader().getResourceAsStream("builtin/material_values.json"));
+		Map<String, Map<String, ?>> builtin_values = (Map<String, Map<String, ?>>)JSONValue.parse(reader);
 
-        defaultValue = new BuiltinValueCollection(builtinValues.getConfigurationSection("default"));
-        registerBuiltins(builtinValues);
+        defaultValue = new BuiltinValueCollection(builtin_values.get("default"));
+        registerBuiltins(builtin_values);
     }
 
-    private void registerBuiltins(ConfigurationSection mainSection) {
-        ConfigurationSection valuesSection = mainSection.getConfigurationSection("values");
-        Set<String> materials = valuesSection.getKeys(false);
-        for (String strMaterial : materials) {
-            Material material = Material.matchMaterial(strMaterial);
-            if (material == null) {
-                throw new RuntimeException("Invalid builtin/materialValues.yml: Couldn't found material: " + strMaterial);
-            }
-            ConfigurationSection materialSection = valuesSection.getConfigurationSection(strMaterial);
-            values.put(material, new BuiltinValueCollection(materialSection));
-        }
+    private void registerBuiltins(Map<String, ?> obj) {
+		Map<String, Map<String, ?>> values_map = (Map<String, Map<String, ?>>)obj.get("values");
+		for(Map.Entry<String, Map<String, ?>> entry : values_map.entrySet()) {
+			String material_str = entry.getKey();
+			Material material = Material.matchMaterial(material_str);
+			if (material == null) {
+				throw new RuntimeException("Invalid builtin/material_values.json: Couldn't found material: " + material_str);
+			}
+			values.put(material, new BuiltinValueCollection(entry.getValue()));
+		}
     }
 
     @Override
@@ -44,16 +40,20 @@ public class BuiltinMaterialValueManager implements MaterialValueManager {
     }
 
     private final class BuiltinValueCollection implements ValueCollection {
-        private final ConfigurationSection section;
+        private final Map<String, ?> section;
 
-        BuiltinValueCollection(ConfigurationSection section) {
+        BuiltinValueCollection(Map<String, ?> section) {
             this.section = section;
         }
 
         private Object get(String name) {
             Object got = section.get(name);
-            if (got == null)
-                return defaultValue.get(name);
+			if (got == null) {
+				if(this == defaultValue) {
+					throw new RuntimeException("No default material value for " + name);
+				}
+				return defaultValue.get(name);
+			}
             return got;
         }
 
