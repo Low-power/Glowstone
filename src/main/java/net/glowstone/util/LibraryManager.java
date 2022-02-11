@@ -106,7 +106,7 @@ public final class LibraryManager {
         public void run() {
             // check if we already have it
             File file = new File(directory, library + '-' + version + ".jar");
-            if (!file.exists() && checksum(file, checksum)) {
+            if (!file.exists() || !checksum(file, checksum)) {
                 // download it
                 GlowServer.logger.info("Downloading " + library + ' ' + version + "...");
                 try {
