@@ -359,13 +359,13 @@ public final class GlowServer implements Server {
                 System.out.println("  --configdir <directory>        Sets the configuration directory.");
                 System.out.println("  --configfile <file>            Sets the configuration file.");
                 System.out.println("  --port, -p <port>              Sets the server listening port.");
-                System.out.println("  --host, -H <ip | hostname>     Sets the server listening address.");
-                System.out.println("  --onlinemode, -o <onlinemode>  Sets the server's online-mode.");
-                System.out.println("  --jline <true/false>           Enables or disables JLine console.");
+                System.out.println("  --host, -H <address>           Sets the server listening address.");
+                System.out.println("  --onlinemode, -o {true|false}  Sets the server's online-mode.");
+                System.out.println("  --jline {true|false}           Enables or disables JLine console.");
                 System.out.println("  --plugins-dir, -P <directory>  Sets the plugin directory to use.");
                 System.out.println("  --worlds-dir, -W <directory>   Sets the world directory to use.");
                 System.out.println("  --update-dir, -U <directory>   Sets the plugin update folder to use.");
-                System.out.println("  --max-players, -M <director>   Sets the maximum amount of players.");
+                System.out.println("  --max-players, -M <number>     Sets the maximum amount of players.");
                 System.out.println("  --world-name, -N <name>        Sets the main world name.");
                 System.out.println("  --log-pattern, -L <pattern>    Sets the log file pattern (%D for date).");
                 return null;
