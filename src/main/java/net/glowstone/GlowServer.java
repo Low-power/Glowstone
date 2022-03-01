@@ -259,13 +259,13 @@ public final class GlowServer implements Server {
      */
     private GlowServerIcon defaultIcon;
     /**
-     * The server port.
+     * The server bind port.
      */
     private int port;
     /**
-     * The server ip.
+     * The server bind address.
      */
-    private String ip;
+    private String address;
     /**
      * The {@link MaterialValueManager} of this server.
      */
@@ -395,7 +395,7 @@ public final class GlowServer implements Server {
                     break;
                 case "--host":
                 case "-H":
-                    parameters.put(Key.SERVER_IP, args[++i]);
+                    parameters.put(Key.SERVER_ADDRESS, args[++i]);
                     break;
                 case "--onlinemode":
                 case "-o":
@@ -568,7 +568,7 @@ public final class GlowServer implements Server {
         nameBans.load();
         ipBans.load();
         setPort(config.getInt(Key.SERVER_PORT));
-        setIp(config.getString(Key.SERVER_IP));
+        setAddress(config.getString(Key.SERVER_ADDRESS));
 
         try {
             LootingManager.load();
@@ -696,8 +696,8 @@ public final class GlowServer implements Server {
         this.port = port;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     /**
@@ -707,12 +707,12 @@ public final class GlowServer implements Server {
      * @return The SocketAddress
      */
     private InetSocketAddress getBindAddress(Key portKey) {
-        String ip = config.getString(Key.SERVER_IP);
+        String address = config.getString(Key.SERVER_ADDRESS);
         int port = config.getInt(portKey);
-        if (ip.isEmpty()) {
+        if (address.isEmpty()) {
             return new InetSocketAddress(port);
         } else {
-            return new InetSocketAddress(ip, port);
+            return new InetSocketAddress(address, port);
         }
     }
 
@@ -1880,7 +1880,7 @@ public final class GlowServer implements Server {
 
     @Override
     public String getIp() {
-        return ip;
+        return address;
     }
 
     @Override

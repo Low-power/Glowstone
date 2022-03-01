@@ -322,7 +322,7 @@ public final class ServerConfig {
      */
     public enum Key {
         // server
-        SERVER_IP("server.ip", "", Migrate.PROPS, "server-ip"),
+        SERVER_ADDRESS("server.address", "", Migrate.PROPS, "server-ip"),
         SERVER_PORT("server.port", 25565, Migrate.PROPS, "server-port"),
         SERVER_NAME("server.name", "Glowstone Server", Migrate.PROPS, "server-name"),
         LOG_FILE("server.log-file", "logs/log-%D.txt"),

@@ -26,7 +26,7 @@ public final class GameServer extends GlowSocketServer implements ConnectionMana
     @Override
     public void onBindSuccess(InetSocketAddress address) {
         getServer().setPort(address.getPort());
-        getServer().setIp(address.getHostString());
+        getServer().setAddress(address.getHostString());
         GlowServer.logger.info("Successfully bound server to " + address + '.');
         super.onBindSuccess(address);
     }
@@ -35,13 +35,12 @@ public final class GameServer extends GlowSocketServer implements ConnectionMana
     public void onBindFailure(InetSocketAddress address, Throwable t) {
         GlowServer.logger.severe("Failed to bind server to " + address + '.');
         if (t.getMessage().contains("Cannot assign requested address")) {
-            GlowServer.logger.severe("The 'server.ip' in your configuration may not be valid.");
+            GlowServer.logger.severe("The 'server.address' in your configuration may not be valid.");
             GlowServer.logger.severe("Unless you are sure you need it, try removing it.");
             GlowServer.logger.severe(t.getLocalizedMessage());
         } else if (t.getMessage().contains("Address already in use")) {
             GlowServer.logger.severe("The address was already in use. Check that no server is");
-            GlowServer.logger.severe("already running on that port. If needed, try killing all");
-            GlowServer.logger.severe("Java processes using Task Manager or similar.");
+            GlowServer.logger.severe("already running on that port.");
             GlowServer.logger.severe(t.getLocalizedMessage());
         } else {
             GlowServer.logger.log(Level.SEVERE, "An unknown bind error has occurred.", t);
