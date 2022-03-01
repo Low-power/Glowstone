@@ -41,10 +41,9 @@ public final class LibraryManager {
 
     private static final LibraryClassLoader loader = new LibraryClassLoader();
 
-    public LibraryManager() {
-        // todo: allow configuration of repository, libraries, and directory
-        repository = "https://repo.glowstone.net/service/local/repositories/central/content/";
-        directory = new File("lib");
+    public LibraryManager(String dir_name, String repository) {
+		directory = new File(dir_name);
+		this.repository = repository;
     }
 
     public static void addToClasspath(String... paths) {
@@ -107,6 +106,9 @@ public final class LibraryManager {
             // check if we already have it
             File file = new File(directory, library + '-' + version + ".jar");
             if (!file.exists() || !checksum(file, checksum)) {
+			// Auto-downloading disabled
+			if(repository == null) return;
+
                 // download it
                 GlowServer.logger.info("Downloading " + library + ' ' + version + "...");
                 try {

@@ -333,6 +333,11 @@ public final class ServerConfig {
         SHUTDOWN_MESSAGE("server.shutdown-message", "Server shutting down.", Migrate.BUKKIT, "settings.shutdown-message"),
         ALLOW_CLIENT_MODS("server.allow-client-mods", true),
 
+		// library manager
+		LIBRARIES_DIRECTORY("libraries.directory-name", "libs"),
+		AUTO_DOWNLOAD_LIBRARIES("libraries.auto-download", true),
+		REMOTE_LIBRARIES_REPOSITORY("libraries.remote-repository", "https://repo.glowstone.net/service/local/repositories/central/content/"),
+
         // console
         USE_JLINE("console.use-jline", true),
         CONSOLE_PROMPT("console.prompt", ">"),

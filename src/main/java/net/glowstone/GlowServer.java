@@ -577,8 +577,12 @@ public final class GlowServer implements Server {
             e.printStackTrace();
         }
 
+		LibraryManager lib_mgr = new LibraryManager(config.getString(Key.LIBRARIES_DIRECTORY),
+			config.getBoolean(Key.AUTO_DOWNLOAD_LIBRARIES) ?
+				config.getString(Key.REMOTE_LIBRARIES_REPOSITORY) : null);
+		lib_mgr.run();
+
         // Start loading plugins
-        new LibraryManager().run();
         loadPlugins();
         enablePlugins(PluginLoadOrder.STARTUP);
 
