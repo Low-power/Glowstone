@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
+//import net.glowstone.util.config.ServerConfig;
 import net.glowstone.GlowServer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -99,12 +100,13 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         buf.writeByte(ACTION_STATS);
         buf.writeInt(sessionId);
         writeString(buf, server.getMotd());
-        writeString(buf, "SMP");
-        writeString(buf, server.getWorlds().get(0).getName());
+        writeString(buf, "");
+        //writeString(buf, server.getConfig().getString(ServerConfig.Key.LEVEL_NAME));
+        writeString(buf, "");
         writeString(buf, String.valueOf(server.getOnlinePlayers().size()));
         writeString(buf, String.valueOf(server.getMaxPlayers()));
         buf.order(ByteOrder.LITTLE_ENDIAN).writeShort(server.getPort());
-        writeString(buf, getIpString());
+        writeString(buf, getAddress());
         ctx.write(new DatagramPacket(buf, packet.sender()));
     }
 
@@ -122,15 +124,15 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("hostname", server.getMotd());
-        data.put("gametype", "SMP");
+        //data.put("gametype", "");
         data.put("game_id", "MINECRAFT");
         data.put("version", GlowServer.GAME_VERSION);
         data.put("plugins", plugins);
-        data.put("map", server.getWorlds().get(0).getName());
+        //data.put("map", server.getConfig().getString(ServerConfig.Key.LEVEL_NAME));
         data.put("numplayers", server.getOnlinePlayers().size());
         data.put("maxplayers", server.getMaxPlayers());
         data.put("hostport", server.getPort());
-        data.put("hostip", getIpString());
+        data.put("hostip", getAddress());
 
         ByteBuf buf = ctx.alloc().buffer();
         buf.writeByte(ACTION_STATS);
@@ -155,8 +157,8 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket> {
         out.writeBytes(str.getBytes(StandardCharsets.UTF_8)).writeByte(0);
     }
 
-    private String getIpString() {
-        String ip = queryServer.getServer().getIp();
-        return ip.isEmpty() ? "127.0.0.1" : ip;
+    private String getAddress() {
+        String address = queryServer.getServer().getIp();
+        return address.isEmpty() ? "0.0.0.0" : address;
     }
 }
